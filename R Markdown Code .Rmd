@@ -1,0 +1,133 @@
+---
+title: "Homework 2 Logistic Regression"
+author: "Ryan Marinelli"
+date: "July 22, 2019"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r include = FALSE}
+require("knitr")
+opts_knit$set(root.dir = "~/Summer 2019/Data Mining")
+Auctions <- readr::read_csv("~/Summer 2019/Data Mining/EbayAuctions.csv")
+data <- Auctions
+```
+
+```{r include = FALSE}
+# Data Pre-processing Step 
+library(forcats)
+colnames(data)[8]<- "Competitive"
+
+View(data)
+
+sampleSize <- floor(0.60*nrow(data))
+set.seed(202)
+
+trainData = sample(seq_len(nrow(data)),size = sampleSize)
+
+train <- data[trainData,]
+test <- data[-trainData,]
+
+as.factor(data$Category)
+as.factor(data$currency)
+as.factor(data$endDay)
+```
+
+```{r e}
+
+glm.fit <- glm(Competitive ~ Category + currency + Duration + endDay + ClosePrice + OpenPrice, data = train, family = binomial)
+
+summary(glm.fit)
+coef(glm.fit)
+           
+```
+#Question 1
+It appears many categories are not competetive. Clothing appears to be the most non-competetive followed by beauty products. Coins and Stamps are also rather non-competetive as well. The most competetive items photography and electronics. Also, Monday appears to be the most competetive day, while Thursday appears to be the least competetive. The columns essentially are used to find how the data relates the positiion of the sigmoid function. Logistic regression is acting as a classifier in this insance to group the data based on their respective probablilties
+
+```{r}
+# glm.pred <- ifelse(glm.probs > 0.5, "comp", "not")
+# table(glm.pred)
+
+glm.probs = predict(glm.fit, train, type = "response")
+glm.pred <- ifelse(glm.probs > 0.5, "comp", "not")
+table(glm.pred)
+
+```
+
+
+```{r}
+glm.fit.test <- glm(Competitive ~ Category + currency + Duration + endDay + ClosePrice + OpenPrice, data = test, family = binomial)
+
+summary(glm.fit.test)
+
+glm.probs = predict(glm.fit.test, test, type = "response")
+glm.pred.2 <- ifelse(glm.probs > 0.5, "comp", "not")
+table(glm.pred.2)
+# True pos 398
+# Fal pos 586 - 390
+#True neg 391
+# Fal neg 597 - 391
+```
+
+Confustion Matrix | Competetive | Not Competetive |
+-------------- |-------------|-----------------|
+Competetive    |398          | 188           |
+               |             |                 |
+Not Competetive|206          | 391             |
+---------------|-------------|-----------------|
+
+
+```{r}
+summary(train)
+train.2 <- train[,-6]
+summary(train.2)
+colnames(train.2)[7] <- "Competitive"
+glm.fit.2<- glm(Competitive ~ Category + currency + Duration + endDay + OpenPrice, data = train.2, family = binomial)
+
+summary(glm.fit.2)
+```
+#Question 3
+The model seems to be rather consistent. Stamps, beauty products, and clothes still have a negative relationship, while electronics still is positive. The main difference is the extent of the trends appears to be more mild. One reason for this could be due to multicolinearity introduced by the variance of the openprice and closed price. This might bias the estimates upwards, so we might be getting more accurate estimates by excluding one of variables that are highly related. 
+
+
+```{r include = FALSE}
+glm.probs = predict(glm.fit.2, train.2, type = "response")
+glm.pred.3 <- ifelse(glm.probs > 0.5, "comp", "not")
+table(glm.pred.3)
+
+# TP = 398
+# TN = 391 
+# FP = 689 - 398
+# FN = 494 - 391
+
+#ACC = (TP + TN) / (P + N)
+#PPV = TP / (TP + FP)
+```
+
+Confustion Matrix | Competetive | Not Competetive |
+-------------- |-------------|-----------------|
+Competetive    |398         | 291           |
+               |             |                 |
+Not Competetive|103          | 494        |
+---------------|-------------|-----------------|
+#Question Three(cont)
+The accuracy with the closing price is 66% with a precision of 67%. Without, the accuracy 
+ is the same, however, precision falls to 57%. 
+
+
+```{r}
+plot(glm.fit.2)
+```
+
+
+
+```{r}
+glm.fit.test <- glm(Competitive ~ Category + currency + Duration + endDay + ClosePrice + OpenPrice, data = test, family = binomial)
+
+summary(glm.fit.test)
+```
+#Question 4
+After reviewing the test model, it is indeed significant. The previous models might question the importance 
+of the close price, but it may simply be bias introduced to the model by a high amount of multicolinearity from other parameters in the model. 

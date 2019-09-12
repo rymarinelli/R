@@ -1,0 +1,91 @@
+```{r}
+library(readr)
+SystemAdministrators <- read_csv("SystemAdministrators.csv")
+data <- SystemAdministrators
+```
+#Question 1
+16% of No's are misclassified by determined by this matrix.
+```{r}
+library(DiscriMiner)
+data.frame(data)
+
+model.1 <- linDA(data[,1:2],data$`Completed task` )
+model.1
+model.1$confusion
+
+model.1$error_rate
+```
+#Question 2
+Since the classification Score of for task not completed is higher, it is classified as such
+```{r}
+#four months of experience and six credits of training
+model.1$functions
+
+noScore <- -12.67 + 4*1.95 + 2.92*6
+yesScore <- -26.27 + 3.39*4 + 3.006*6
+
+noScore > yesScore
+
+```
+```{r}
+
+sampleSize <- floor(0.50*nrow(data))
+set.seed(12345)
+
+trainData = sample(seq_len(nrow(data)),size = sampleSize)
+
+train <- data[trainData,]
+test <- data[-trainData,]
+
+model.train <- linDA(train[,1:2],train$`Completed task` )
+model.test <- linDA(test[,1:2],test$`Completed task` )
+
+```
+
+```{r}
+model.train$confusion
+model.test$confusion
+#29 true pos
+# 5 True Neg
+
+```
+#Question 3
+There seems to be consistant results between the training and validation set. The training set misclassifes true not complete tasks a bit though. 
+
+```{r}
+library(neuralnet)
+data.frame(train)
+class(train)
+
+train$`Completed task` <- ifelse(train$`Completed task` == "Yes", 1 , 0)
+train$Experience<- ifelse(train$Experience > mean(train$Experience), 1 , 0)
+train$Training <- ifelse(train$Training> mean(train$Training), 1 , 0)
+model.3 <- neuralnet(train$'Completed task' ~ Experience + Training, data = train,
+                     hidden = 1)
+
+```
+
+
+```{r}
+test$`Completed task` <- ifelse(test$`Completed task` == "Yes", 1 , 0)
+test$Experience<- ifelse(test$Experience > mean(test$Experience), 1 , 0)
+test$Training <- ifelse(test$Training> mean(test$Training), 1 , 0)
+model.4 <- neuralnet(test$'Completed task' ~ Experience + Training, data = test,
+                     hidden = 1)
+```
+
+```{r}
+Predict=compute(model.3,train)
+prob <- Predict$net.result
+pred <- ifelse(prob>0.5, 1, 0)
+sum(pred)
+
+Predict.2=compute(model.4,test)
+prob <- Predict.2$net.result
+pred <- ifelse(prob>0.5, 1, 0)
+sum(pred)
+
+```
+
+#Question 3
+The neural networks seems to predict more completed tasks than compared to LDA. There are 15 compared to the 5 predicted to the other models 

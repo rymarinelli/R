@@ -1,0 +1,144 @@
+---
+title: "Linear Regression Assignment One"
+author: "Ryan Marinelli"
+date: "July 22, 2019"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r include = FALSE}
+require("knitr")
+opts_knit$set(root.dir = "~/Summer 2019/Data Mining")
+Airfares <- readr::read_csv("~/Summer 2019/Data Mining/Airfares.csv")
+df <- Airfares
+```
+
+
+
+```{r include = FALSE}
+nrow(df)
+train.df <- df[1:319,]
+train.df <- train.df[,-c(1:4,7:8,15:16)]
+train.df <- train.df[,-8]
+```
+
+#Generates a Correlation Table
+```{r echo = FALSE}
+cor(train.df)
+```
+
+#Generates a corrgram 
+```{r echo = FALSE}
+library(corrgram)
+pairs(FARE ~ ., data = train.df, pch = ".")
+corrgram(train.df)
+
+```
+
+#Question One 
+E_POP is the most highly coorelated with fare followed by E_INCOME. This suggests they may be the best     predictors. Coupon is also related to fare. HHI also seemed to be corrlated to fare as well. This could suggest
+that market concenration could bring greater competetion which could lower prices. 
+
+```{r include = FALSE }
+library(caret)
+library(forcats)
+data_ctrl <- trainControl(method = "cv", number = 5)
+train.df.2 <- df[,-c(1:4)]
+factor(train.df.2$SLOT)
+
+factor(train.df.2$VACATION)
+factor(train.df.2$SW)
+factor(train.df.2$GATE)
+
+```
+
+```{r echo = FALSE}
+model.1 <- train(FARE ~ .,   # model to fit
+                     data = train.df.2,                        
+                     trControl = data_ctrl,              # folds
+                     method = "lm",                      # specifying regression model
+                     na.action = na.pass) 
+```
+
+#Question 2
+There is a positive relationship with the price of fare and coupons. For a unit increase in the price of a fare, there is a $3.75  increase in the amount of coupons used to cover the flight. This is logical because the increased price of the fare would encourage people to use more coupons. 
+
+New has a negative value. For every new carrier entering the market, there is a 2.39 unit decrease in the cost of fare. 
+
+Vacation has a negative association. If a route is a vacation route, the fare is $35 less. This is likely picking up on that people going on vacations are more price-sensitive in their consumption and these routes are more elastic in pricing. 
+
+
+If SouthWest servces a route, the price of the fare drops by $49 dollars. This could be picking up on increased competetion on a specific routes. 
+
+There is a small positive relationship with HHI and the cost of the fare and market concentration. 
+
+There is a slight positive reastionship with income of the starting and ending cities average income and the cost of fare. The argument being that the higher the income in these areas, the more people are able to afford.
+
+The starting cities population likely has a small positive relationship as well as the ending cities population. 
+
+SLOTfree and GateFree airports have negative relationships with the price of fares. One argument that can be made is that by compliance with regulations increases the cost of operations and this is detected in the fare of the ticket. By not having these regualtions in airports, a negative relationship is dectected.
+
+There is a positive relationship with fare price and distance. This makes sense as you travel further, more resources are spent on a particular flight. 
+
+Lastly, passengeer number has a negative relationship with the amount of fare. The more people there are on a flight, the more heterogenous the base of customers is and the more elastic it is likely to be. This makes it more difficult to have higher prices. 
+
+
+
+```{r echo= FALSE}
+options(scipen = 999)
+model.1
+model.1$finalModel
+
+# COUPON = 1.202, NEW = 3, VACATION = No, SW = No, HI = 4442.141, S_INCOME = $28,760, E_INCOME = $27,664, S_POP = 4,557,004, E_POP = 3,195,503, SLOT = Free, GATE = Free, PAX = 12782, DISTANCE = 1976 miles.
+
+values <- c(1, 12.02, 3, -1, -1, 4442.141, 28760, 0, 27664, 4557004, 3195503, 1, 1, 1976, 12782)
+parameter <- rep(1:14)
+
+i = 0
+
+# Multiply the value of the parameter by the coef of the value to get the effect of each parameter
+for(i in 1:14)
+{
+  parameter[i] = (model.1$finalModel$coefficients[i])*(values[i])
+  
+}
+
+# round(sum(parameter),2)
+
+
+
+```
+
+```{r include = FALSE}
+COUPON = 1.202 *  3.75488605 
+NEW = 3 * -2.39553001 
+VACATION = 35.64444149
+SW = 40.96960035
+HI = 4442.141 * .00842579  
+S_INCOME = 28760 * .00120668 
+E_INCOME = 27664 * .00137427
+S_POP = 4557004* .00000340 
+E_POP = 3195503 * .00000436
+SLOT = -16.24476823 
+GATE = -20.57922995 
+PAX = 12782*.00087094 
+DISTANCE = 1976* .07498426
+
+
+Fare = COUPON + NEW + VACATION + SW + HI + S_INCOME + E_INCOME + S_POP + SLOT + GATE + PAX+ DISTANCE
+
+Fare
+
+```
+#Question 3
+The predicted value of fare is $322.06 on average.  
+
+
+#Question 4
+Essentially all the data is available in some form, it depends on how you want to operationalize the definitions. For instance, if a route is a vacation route is debatable. However, you could define if a route is a vacation route based on the elasticity of the route. If there is signficant change in consumption based on changes in fare, this suggests that the composition of people flying is composed of tourists. Business people would not care that much. A significant portion of the data that is used can be found in the famous DB1B dataset provided the Department of Transportation. There is also the T100 dataset as well. The also data that you might have trouble accessing would be the coupon data. 
+
+
+
+
