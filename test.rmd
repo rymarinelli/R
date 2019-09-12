@@ -1,0 +1,306 @@
+---
+title: "Homework 3 Cluster Modeling"
+author: "Ryan Marinelli"
+date: "6/23/2019"
+output:
+  pdf_document: default
+  html_document: default
+---
+```{r}
+library(readr)
+schizophrenia <- read_csv("~/Cluster Analysis_Supplementary files_wk3/schizophrenia.csv")
+```
+
+```{r include = FALSE}
+#install.packages("tidyverse")
+library(tidyverse)
+options(expressions= 100000)
+data <- schizophrenia
+female <- filter(data, gender == 1)
+male <- filter(data, gender != 1)
+hist(data$age)
+```
+
+```{r include = FALSE}
+attach(male)
+mean(age)
+median(age)
+var(age)
+
+#install.packages("e1071")
+library(e1071)
+skewness(age)
+kurtosis(age)
+```
+
+
+```{r include = FALSE}
+attach(female)
+mean(age)
+median(age)
+var(age)
+
+#install.packages("e1071")
+library(e1071)
+skewness(age)
+kurtosis(age)
+```
+
+
+```{r include = FALSE}
+library(knitr)
+#install.packages("e1071")
+library(e1071)
+
+mean <- c(mean(male$age),mean(female$age))
+median <- c(median(male$age),median(female$age))
+variance <- c(var(male$age),var(female$age))
+skew <-  c(skewness(male$age), skewness(female$age))
+kurt <-  c(kurtosis(male$age), kurtosis(female$age))
+
+results <- rbind(mean,median)
+results <- rbind(results, variance)
+results <- rbind(results, skew)
+results <- rbind(results,kurt)
+data.frame(results)
+colnames(results)  <- c("male" , "female")
+```
+
+```{r}
+library(knitr)
+kable(results, caption = "Descriptive Statistics")
+```
+
+```{r include = FALSE}
+
+par(mfrow=c(2,2))
+
+
+femaleHist <- hist(female$age)
+multiplier2 <- femaleHist$counts / femaleHist$density
+mydensity2 <- density(female$age)
+mydensity2$y <- mydensity2$y * multiplier2[1]
+
+maleHist <- hist(male$age)
+multiplier <- maleHist$counts / maleHist$density
+mydensity <- density(male$age)
+mydensity$y <- mydensity$y * multiplier[1]
+
+```
+
+```{r}
+plot(maleHist)
+lines(mydensity)
+
+plot(femaleHist)
+lines(mydensity2)
+```
+
+
+Graphically, there are large differences in the distributions. 
+```{r}
+#install.packages("mclust")
+library(mclust)
+df <- densityMclust(male)
+summary(df)
+plot(df, what = "BIC")
+
+
+df2 <- densityMclust(female)
+summary(df2)
+plot(df2, what = "BIC")
+```
+
+There appears a significant difference in the models. As there is a difference of greater than 2.
+
+
+```{r}
+df3 <- densityMclust(data)
+summary(df3)
+plot(df3, what = "BIC")
+```
+This plot further suggests differences when looking at the genders in aggregate. 
+
+
+
+```{r}
+library(mclust)
+boot1 <- MclustBootstrap(df, nboot = 999, type = "bs")
+summary(boot1, what = "se")
+summary(boot1, what = "ave")
+```
+
+```{r}
+#install.packages("mixtools")
+library(mixtools)
+wait = male$age
+mixmdl = normalmixEM(wait)
+plot(mixmdl,which=2)
+ lines(density(wait), lty=2, lwd=2)
+```
+
+
+This graph makes a stronger case that using multiple components is the better modeling choice. 
+It is clear that a single noraml distribution does not fit well. This is further strengthened after reviewing 
+the other models more formally in the below. 
+
+```{r}
+
+library(mclust)
+model.3 <- Mclust(data = male$age, G = 2 , modelNames = "E", 
+           prior = NULL, 
+           control = emControl(), 
+           initialization = NULL, 
+           warn = mclust.options("warn"), 
+           x =  NULL, 
+           verbose = interactive())
+BIC(model.3)
+
+model.4 <- Mclust(data = male$age, G = 1 , modelNames = "X", 
+           prior = NULL, 
+           control = emControl(), 
+           initialization = NULL, 
+           warn = mclust.options("warn"), 
+           x =  NULL, 
+           verbose = interactive())
+           
+BIC(model.4)
+
+model.5 <- Mclust(data = male$age, G = 2 , modelNames = "V", 
+           prior = NULL, 
+           control = emControl(), 
+           initialization = NULL, 
+           warn = mclust.options("warn"), 
+           x =  NULL, 
+           verbose = interactive())
+BIC(model.5)
+
+
+#Corresponds to 2a in problem set
+
+```
+
+#Assignment 5
+
+#Question 1
+This graph demonstrates a fit with a single distribution. It is a not a good fit for the data. This suggests
+that using model 2 would be a better choice. Between 2a and 2b, 2a is the better choice. Model 2a is the model that should be used. BIC is a measure that balences the fitness of the data with parsimony. By finding the model with the lowest BIC, you are finding the model that has struck the best balence of fitness and explanitory power. 
+
+
+```{r}
+ model.6 <-  MclustDR(model.5)
+summary(model.6)
+plot(model.6, what = "density", type = "hdr",
+     data = male$age, points.cex = 0.5)
+```
+
+#Question 2 
+One way to think of these clusters is what they represent. They represent groups that are likely to demonstrate schizophrenia early in life or later in life as they age. The first cluster is likely picking up the on-set of schizophrenia during teen years. With a mean of 20, this is a reasonable way to view the data. It also helps to explain why the standard error of age is lesser. It is a window when people would be more likely to present issues
+
+Cluster two is more reprsentive of a general population. The mean age is 28. The mean is not very robest, so the older segments of the population increase the mean rather signficantly. It also helps to explain the despersion found throughout. 
+
+When considering the graphs, cluster 1 seems to be more compact than cluster 2. Cluster one might be slightly larger than cluster 2 in terms of size, but it has substanitally lower standard error in reference to its variance. Cluster 2 might be slightly smaller, but the standard error is rather high when compared to the cluster one, so it is more 
+elongated. 
+
+
+```{r}
+library(mclust)
+model.7 <- Mclust(data = female$age, G = 2 , modelNames = "E", 
+           prior = NULL, 
+           control = emControl(), 
+           initialization = NULL, 
+           warn = mclust.options("warn"), 
+           x =  NULL, 
+           verbose = interactive())
+BIC(model.7)
+
+model.8 <- Mclust(data = female$age, G = 1 , modelNames = "X", 
+           prior = NULL, 
+           control = emControl(), 
+           initialization = NULL, 
+           warn = mclust.options("warn"), 
+           x =  NULL, 
+           verbose = interactive())
+           
+BIC(model.8)
+
+model.9 <- Mclust(data = female$age, G = 2 , modelNames = "V", 
+           prior = NULL, 
+           control = emControl(), 
+           initialization = NULL, 
+           warn = mclust.options("warn"), 
+           x =  NULL, 
+           verbose = interactive())
+BIC(model.9)
+
+model.10 <-  MclustDR(model.7)
+summary(model.10)
+plot(model.10, what = "density", type = "hdr",
+     data = female$age, points.cex = 0.5)
+```
+
+Question 3
+Model 2b should be used in this instance. As it has the smallest BIC, it suggests that this model strikes the best
+balence between parsimony and complexity. 
+
+Question 4
+Cluster 1 is larger than cluster 2. But, it has a smaller mean. The standard error for variance is equal
+in this model, so cluster 1 will be demonstrate more despersion than cluster 2 as it is larger. This model is 
+more likely to pick up on how women tend to show symptoms at different times. As the variance is equal, it 
+highlights the differences is the the sizes of the clusters. 
+
+
+#Assignment 6 
+```{r include = FALSE}
+library(readr)
+candy <- read_csv("C:/Users/Ryan/Desktop/Summer 2019/Statistics/Cluster Analysis_Supplementary files_wk3/candy.csv")
+View(candy)
+```
+
+```{r}
+hist( x = candy$Frequency, breaks = 20)
+```
+```{r include = FALSE}
+#install.packages("flexmix")
+library(flexmix)
+
+pos.model.3 <- flexmix(candy$Frequency ~ candy$NumberofPackages, k = 3, data = candy, model = FLXMRglm(family = "poisson"))
+
+pos.model.4 <- flexmix(candy$Frequency ~ candy$NumberofPackages, k = 4, data = candy, model = FLXMRglm(family = "poisson"))
+
+pos.model.5 <- flexmix(candy$Frequency ~ candy$NumberofPackages, k = 5, data = candy, model = FLXMRglm(family = "poisson"))
+
+pos.model.6 <- flexmix(candy$Frequency ~ candy$NumberofPackages, k = 6, data = candy, model = FLXMRglm(family = "poisson"))
+
+pos.model.7 <- flexmix(candy$Frequency ~ candy$NumberofPackages, k = 7, data = candy, model = FLXMRglm(family = "poisson"))
+
+
+```
+
+
+```{r}
+BIC(pos.model.3) 
+BIC(pos.model.4)
+BIC(pos.model.5)
+BIC(pos.model.6)
+BIC(pos.model.7)
+
+library(flexmix)
+test <- LR_test(pos.model.3, alternative = "greater", R = 15, verbose = 1)
+test
+```
+Question 1
+The option with 3 clusters provides the smallest BIC and thus is preferable. AS BIC is a measure of a model's fit and of its parsimony, the model that is able  to minimize it should be selected. But, it does not have a 
+signficant p-value as it exceeds .05.
+
+Question 2
+There are different perpestives to take when performing analysis of the clusters. The first is to understand what the clusters are attempting to represent. In this analysis, each cluster is representing the behavior of consumers. It is effectively an excecise in market segmententation. From the mean of the number of packages, the consumers can be grouped by those that ordered the most hard-candy, those that ordered some hard candy, and those that order some hard candy. This is cluster 3, cluster 1 , and cluster 2 respectively. Cluster 3 has the highest mean and the smallest size. This suggests that consumers are rather specialized and share similar qualities. When considering what the graph of the cluster, it would likelly be elliptical  stretching around a few points. Cluster 2 represents people that consume some hard candy. They size of cluster is not as skinny as cluster 3, but it is still rather elliptical. It represents the converse case of cluster 3. Cluster 1 represents the more general case. It represents moderate consumption of hard candy. Because of this generalizablity, more people are likely to fall in this group and this may explain why the size of this cluster is larger than the more specialized clustures that represent groups that consume only a small amount or a lot of hard candy. Also, cluster one is likely more spherical than compared to cluster 2 or cluster 3. 
+
+
+```{r include = FALSE}
+library(tinytex)
+```
+
+
+
+
