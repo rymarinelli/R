@@ -1,0 +1,83 @@
+---
+output:
+  html_document: default
+  pdf_document: default
+---
+Imports Data 
+```{r}
+galaxy <- read.csv("C:/Users/Ryan/Desktop/Summer 2019/Statistics/Cluster Analysis week 1 files/galaxy.csv", sep="")
+```
+
+Assigns imported data to be used
+```{r}
+data <- galaxy
+```
+
+
+
+```{r}
+plot(data)
+```
+
+```{r}
+distribution <- data[,1]
+
+as.numeric(distribution)
+hist(distribution)
+```
+
+```{r}
+distance <- dist(data, method = 'euclidean')
+distance
+```
+
+
+```{r}
+clustered <- hclust(distance, method = 'average')
+clustered
+plot(clustered)
+rect.hclust(clustered , k = 6, border = 2:6)
+```
+
+Question 2 
+
+Reads in Data 
+```{r}
+geyser <- read.csv("C:/Users/Ryan/Desktop/Summer 2019/Statistics/Cluster Analysis week 1 files/geyser.csv")
+data <- geyser
+
+```
+
+Histogram of Eruption 
+```{r}
+hist(data$erupt)
+```
+
+Histogram of Interval Data 
+```{r}
+hist(data$interval)
+```
+
+Scatter Plot of Eruption and Interval Data 
+```{r}
+scatter.smooth(data$erupt, data$interval)
+```
+
+Normalizes Data 
+```{r}
+# install.packages("BBmisc")
+normData <- BBmisc:: normalize(data, method = "standardize", range = c(0, 1))
+```
+
+```{r}
+distanceSecond <- dist(normData, method = 'euclidean')
+distanceSecond
+```
+
+```{r}
+clusteredSecond <- hclust(distanceSecond, method = 'average')
+clusteredSecond
+plot(clusteredSecond)
+rect.hclust(clusteredSecond , k = 20, border = 1:5)
+```
+

@@ -1,0 +1,177 @@
+---
+title: "Homework Four"
+author: "Ryan Marinelli"
+date: "June 28, 2019"
+output: pdf_document
+---
+```{r include = "FALSE"}
+library(readr)
+require("knitr")
+opts_knit$set(root.dir = "~/Summer 2019/Clustering/Data Set for Assignment 4")
+diabetesu <- read_csv("diabetesu.csv")
+data <- diabetesu
+```
+
+Cleaning up data and reviewing how many clusters to include
+```{r}
+library(factoextra)
+newData <- scale(data)
+fviz_nbclust(newData,hcut, "wss")
+fviz_nbclust(newData, FUN = hcut, method = "silhouette")
+```
+
+It appears that either two or three clusters seem appropriate. As the problem states three clusters
+is the true amount, it will be used in this analysis. 
+
+
+```{r}
+library(fastcluster)
+dist_mat <- dist(newData, method = 'euclidean')
+hclust_avg <- hclust(dist_mat, method = 'average')
+plot(hclust_avg)
+```
+
+```{r}
+cut_avg <- cutree(hclust_avg, k = 3)
+plot(hclust_avg)
+rect.hclust(hclust_avg , k = 3, border = 4:6)
+abline(h = 3, col = 'red')
+```
+```{r include = FALSE }
+mean(data$glucose)
+mean(data$insulin)
+mean(data$sspq)
+data.frame(cut_avg)
+newerData <- cbind(data,cut_avg)
+
+first <- dplyr::filter(newerData, cut_avg == 1)
+second  <- dplyr::filter(newerData, cut_avg == 2)
+third <-  dplyr::filter(newerData, cut_avg == 3)
+
+#overt cases
+mean(third$glucose) > mean(newerData$glucose)
+mean(third$insulin) > mean(newerData$insulin)
+mean(third$sspq) < mean(newerData$sspq)
+
+#chemical
+mean(first$glucose) < mean(newerData$glucose)
+mean(first$insulin) < mean(newerData$insulin)
+mean(first$sspq) < mean(newerData$sspq)
+
+#normal
+mean(second$glucose) < mean(newerData$glucose)
+mean(second$insulin) < mean(newerData$insulin)
+mean(second$sspq) < mean(newerData$sspq)
+
+
+```
+
+# Question 1
+There are three clusters in the data. The third cluster in the dark blue box is the overt diabetic group.
+The mean of that cluster is higher in glucose and insulin, but lesser in terms of SSPG. The cluster seems to demonstrate some heterogenity. There appears to be two other groups in the overt diabetic cluster. 
+This suggests that the severity of the disease is not uniform in the group and severity changes. For instance, the case of the 144th member of the test appears to belong to the group that is more severe. 
+It appears the more leftward cases are more severe in these sub-clusters, and the cases that are less
+severe are in the rightward sub-clusters within the blue cluster of the dendrogram. 
+
+The cluster of chemical diabetics is in the pink cluster. There seem to be less divisions in this cluster than compared to the overt case. In the overt case, there are often life style factors that can excerbate 
+issues. It is likely composed of more type II cases. In this instance, there are likely more type one diabetics.Thus, lifestyle factors might not influence levels as much as in the other case. This would
+make the data more homogeneous and there would be less divisions found in the dendrogram. This is why 
+the cluster is far more narrow in a sense compared to the others 
+
+The cluster in the middle is the normal one. There are so many divisions because, there are so many 
+different groups found in what is considered normal. As lifestyle factors likely contribute to 
+the flux in the variables of interest, it likely this contributes to the amount of divisions found in this cluster. 
+
+
+```{r}
+library(dendextend)
+dendrogram <- as.dendrogram(hclust_avg)
+coloredDend <- color_branches(dendrogram, h = 3)
+plot(coloredDend)
+```
+
+```{r}
+library(factoextra)
+cluster<- kmeans(newData, centers = 3, nstart = 25)
+clusterPlot <- fviz_cluster(cluster, newData )
+forcats::fct_count(as.factor(cluster$cluster))
+plot(clusterPlot)
+
+```
+
+#  Question 2. 
+In kmeans, the first cluster is the overt diabetics. The second cluster is the normal group, and the 
+third cluster is the chemical diabetics group. The first cluster is elliptical due to the variation caused by the variance of latent variables.  On of which, is likely is the severity of type II diabetes and how lifestyle affects the variables of interest. Because latent variables are freer to vary, it explains the shape of this cluster. The second cluster has more people, so the latent variables are diluted. This helps to explain the more circular shape found in the normal cluster. The third cluster is of chemically diabetic people. It is more elliptical in shape, but it is less so than the first cluster. This could be from a higher concentration of type I diabetics that get diabetes from factor they are unable to control so, the latent variables would vary less.   
+
+
+
+```{r include = FALSE}
+#install.packages("quantmod")
+library(forcats)
+library(dplyr)
+library(quantmod)
+
+hierClustering <- cutree(hclust_avg, 3)
+kmeansClustering <- cluster$cluster
+
+data.frame(kmeansClustering)
+id <- 1:145
+kmeans <- cbind(id,kmeansClustering)
+comapare <- cbind(hierClustering,kmeans)
+comapare
+
+
+cross <- cbind(fct_count(as.factor(hierClustering)), fct_count(as.factor(kmeansClustering)))
+
+data.frame(cross)
+
+cross
+
+diff.1 <- 109 - 81
+diff.2 <- 27 -26
+diff.3 <- 37 -10
+
+```
+```{r}
+totalDiff <-diff.1 + diff.2 + diff.3
+percentDiff <- totalDiff/ 145
+```
+
+# Question 3.
+There is a resonable amount of congruency with the clustering methods. Take the overt cases scenario.
+There is only one difference in classification. The more signficant difference is what is considered
+normal. The normal group become a lot smaller in the kmeans cluster compared to the hierarchical cluster.
+In total, the clusters appear to be 60% similar. 
+
+
+
+```{r}
+#install.packages("mclust")
+library(mclust)
+cluster.3 <- densityMclust(newData)
+summary(cluster.3)
+plot(cluster.3, what = "BIC")
+```
+
+```{r}
+library(mixtools)
+wait = newerData$insulin
+mixmdl = normalmixEM(wait)
+plot(mixmdl,which=2)
+ lines(density(wait), lty=2, lwd=2)
+```
+
+```{r}
+model.3 <- Mclust(data = newerData$insulin, G = 3 , modelNames = "E", 
+           prior = NULL, 
+           control = emControl(), 
+           initialization = NULL, 
+           warn = mclust.options("warn"), 
+           x =  NULL, 
+           verbose = interactive())
+model.3$BIC
+
+```
+#Additional Analysis
+There appears to be several different components that underly the data. This represents the different 
+groups represented in the data in terms of being chemically diabetic, overtly diabetic, or normal.  

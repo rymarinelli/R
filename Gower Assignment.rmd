@@ -1,0 +1,73 @@
+---
+title: "Gower Assignment"
+author: "Ryan Marinelli"
+date: "June 28, 2019"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r include = FALSE}
+library(readr)
+require("knitr")
+opts_knit$set(root.dir = "~/Summer 2019/Clustering/Data Set for Assignment 4")
+authordfFromR <- read_csv("authordfFromR.csv ")
+data <- authordfFromR
+```
+
+```{r include = FALSE}
+#install.packages("StatMatch)
+#install.packages("FastDummies")
+#install.packages("fastcluster")
+
+library(StatMatch)
+library(fastcluster)
+library(fastDummies)
+
+col <- fastDummies::dummy_cols(data$scon, split = F)
+col <- col$.data_y
+newData <- cbind(data,col)
+View(newData)
+
+
+
+
+```
+
+```{r}
+
+gower <- gower.dist(as.numeric(newData$lendial), as.numeric(newData$col))
+gower <- as.dist(gower)
+
+hclust_avg <- hclust(gower, method = 'average')
+clusterPlot <- plot(hclust_avg)
+
+cut_avg <- cutree(hclust_avg, k = 3)
+
+plot(hclust_avg)
+rect.hclust(hclust_avg , k = 3, border = 4:6)
+abline(h = 3, col = 'red')
+
+```
+
+#Description of Dendrogram
+
+This dendrogram breaks down the average length of dialogues and if a stream of consciousness is used. The  variable "scon" has been recoded as a binary variable.  There are three clusters. The first cluster is *Anna Karenina*. The second cluster is *War and Peace*. The third cluster is all the other novels. This clustering is likely picking up on the unique writting stlye of Tolstoy.
+
+
+
+
+#Analysis of Dendrogram Through Domain Expertise 
+This dendrogram reviews the relationship between stream of consciousness and the the length of dialgoues.
+*Anna Karenina* seems to be the most unique in this repesct. *Anna Karenina* is more plot driven, so it makes sense it would have a stronger relationship with the length of diagloues and stream of consciousness. This is likely reflected with the interactions of the many characters in the novel. 
+
+The plot of *War and Peace* is more event driven. War and Peace focuses more on the setting than *Anna Karenia*.Just consider how an aside of a character would influence the data. When comparing Tolstoy to Dickens and Twain, it would make sense that the novels would cluster in this manner. Tolstoy's style is signifcantly different. And when considering the two novels in this set, Anna Karenia is often considered one of his more unique works.  
+
+
+
+
+
+
+
+
+

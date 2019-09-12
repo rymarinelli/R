@@ -1,0 +1,169 @@
+---
+title: "Homework 3"
+author: "Ryan Marinelli"
+date: "6/22/2019"
+output: html_document
+---
+
+
+```{r}
+library(readr)
+data <- read.csv("schizophrenia.csv")
+View(schizophrenia)
+```
+Reading in data 
+```{r}
+library(dplyr)
+data <- schizophrenia
+female <- filter(data, gender == 1)
+male <- filter(data, gender != 1)
+```
+
+```{r}
+hist(data$age)
+```
+
+
+Finding Descriptive Statistics 
+```{r}
+attach(male)
+mean(age)
+median(age)
+var(age)
+
+install.packages("e1071")
+library(e1071)
+skewness(age)
+kurtosis(age)
+```
+
+```{r}
+attach(female)
+mean(age)
+median(age)
+var(age)
+
+install.packages("e1071")
+library(e1071)
+skewness(age)
+kurtosis(age)
+
+```
+```{r}
+library(knitr)
+install.packages("e1071")
+library(e1071)
+
+mean <- c(mean(male$age),mean(female$age))
+median <- c(median(male$age),median(female$age))
+variance <- c(var(male$age),var(female$age))
+skew <-  c(skewness(male$age), skewness(female$age))
+kurt <-  c(kurtosis(male$age), kurtosis(female$age))
+
+results <- rbind(mean,median)
+results <- rbind(results, variance)
+results <- rbind(results, skew)
+results <- rbind(results,kurt)
+data.frame(results)
+colnames(results)  <- c("male" , "female")
+
+
+```
+
+
+```{r}
+library(knitr)
+kable(results, caption = "Descriptive Statistics")
+```
+
+```{r}
+
+par(mfrow=c(2,2))
+
+
+femaleHist <- hist(female$age)
+multiplier2 <- femaleHist$counts / femaleHist$density
+mydensity2 <- density(female$age)
+mydensity2$y <- mydensity2$y * multiplier2[1]
+
+plot(femaleHist)
+lines(mydensity2)
+
+
+maleHist <- hist(male$age)
+multiplier <- maleHist$counts / maleHist$density
+mydensity <- density(male$age)
+mydensity$y <- mydensity$y * multiplier[1]
+
+plot(maleHist)
+lines(mydensity)
+```
+```{r}
+install.packages("mclust")
+library(mclust)
+df <- densityMclust(male)
+summary(df)
+plot(df, what = "BIC")
+
+
+df2 <- densityMclust(female)
+summary(df2)
+plot(df2, what = "BIC")
+
+
+```
+
+There appears a significant difference in the models. As there is a difference of greater than 2.
+
+
+```{r}
+df3 <- densityMclust(data)
+summary(df3)
+plot(df3, what = "BIC")
+```
+
+
+This plot further suggests differences when looking at the genders in aggregate. 
+```{r}
+boot1 <- MclustBootstrap(model.1, nboot = 999, type = "bs")
+summary(boot1, what = "se")
+summary(boot1, what = "ave")
+
+plot(boot1, what = "mean")
+```
+
+```{r}
+install.packages("mixtools")
+library(mixtools)
+model.2 = male$age
+mixmdl = normalmixEM(model.2)
+plot(mixmdl,which=2)
+ lines(density(wait), lty=2, lwd=2)
+```
+
+
+##Assignment 5
+
+# Question 1
+This graph demonstrates a fit with a single distribution. It is a not a good fit for the data. This suggests
+that using model 2 would be a better choice. Between 2a and 2b, 2a is the better choice. Model 2a is the model that should be used. BIC is a measure that balences the fitness of the data with parsimony. By finding the model with the lowest BIC, you are finding the model that has struck the best balence of fitness and explanitory power. 
+
+
+#Question 2 
+Cluster 1 seems to be more compact than cluster 2. Cluster one might be slightly larger than cluster 2 
+in terms of size, but it has substanitally lower standard error in reference to its variance. Cluster 2 might be
+slightly smaller, but the standard error is rather high when compared to the cluster one, so it is more 
+elongated. 
+
+#Question 3
+Model 2b should be used in this instance. As it has the smallest BIC, it suggests that this model strikes the best
+balence between parsimony and complexity. 
+
+#Question 4
+Cluster 1 is larger than cluster 2. But, it has a smaller mean. The standard error for variance is equal
+in this model, so cluster 1 will be demonstrate more despersion than cluster 2 as it is larger. This model is 
+more likely to pick up on how women tend to show symptoms at different times. As the variance is equal, it 
+highlights the differences is the the sizes of the clusters. 
+
+
+

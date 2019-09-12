@@ -1,0 +1,12 @@
+
+
+```{r}
+cluster.7 <- fviz_cluster(list(data = newData, cluster = grouped))
+
+jpeg("Hcluster.jpg", width = 350, height = "350")
+```
+
+```{r}
+dist.3  <- get_dist(newData)
+fviz_dist(dist.3, gradient = list(low = "#00AFBB", mid = "white", high = "#FC4E07"))
+```
