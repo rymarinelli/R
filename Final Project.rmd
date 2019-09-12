@@ -1,0 +1,215 @@
+---
+title: "Ryan Marinelli: Case Study Project "
+output: html_notebook
+---
+
+```{r include= FALSE}
+# Reading in data 
+library(readr)
+Fundraising <- read_csv("Fundraising.csv")
+data <-  Fundraising
+```
+
+```{r include=FALSE}
+#Data Preprocessing 
+set.seed(12345)
+smp_size <- floor(0.60 * nrow(data))
+
+## set the seed to make your partition reproducible
+set.seed(123456)
+train_ind <- sample(seq_len(nrow(data)), size = smp_size)
+
+train <- data[train_ind, ]
+test <- data[-train_ind, ]
+train$TARGET_D <- NULL
+test$TARGET_D <- NULL
+
+data.frame(train)
+```
+
+```{r include= T}
+library(dplyr)
+library(MASS)
+
+
+
+model.1 <- lda(train$TARGET_B ~., train)
+lda.predict <- predict(model.1, newdata = train)
+posteriors <- as.data.frame(lda.predict$posterior)
+
+
+
+```
+
+```{r include=FALSE}
+donors = as.numeric(posteriors$`0`)
+as.data.frame(donors)
+
+notDonors <- as.numeric(posteriors$`1`)
+as.data.frame(notDonors)
+
+
+donors <- subset(donors, donors > .50)
+notDonors <- subset(notDonors, notDonors > .50)
+as.data.frame(donors)
+as.data.frame(notDonors)
+
+
+length(donors)
+length(notDonors)
+
+percentDonors <- length(donors)/ (length(donors) + length(notDonors))
+
+percentNotDonors <- length(notDonors)/ (length(donors) + length(notDonors))
+
+
+
+```
+
+```{r include= F }
+model.2 <- lda(train$TARGET_B ~., train)
+lda.predict <- predict(model.2, newdata = test)
+posteriors <- as.data.frame(lda.predict$posterior)
+
+donors = as.numeric(posteriors$`0`)
+as.data.frame(donors)
+
+notDonors <- as.numeric(posteriors$`1`)
+as.data.frame(notDonors)
+
+
+donors <- subset(donors, donors > .50)
+notDonors <- subset(notDonors, notDonors > .50)
+as.data.frame(donors)
+as.data.frame(notDonors)
+
+
+length(donors)
+length(notDonors)
+
+percentDonors.test.1 <- length(donors)/ (length(donors) + length(notDonors))
+
+percentNotDonors.test.1 <- length(notDonors)/ (length(donors) + length(notDonors))
+
+```
+
+```{r include=FALSE}
+percentDonors
+percentDonors.test.1
+
+percentNotDonors
+percentNotDonors.test.1
+
+```
+
+
+```{r include = F}
+attach(train)
+colnames(train)
+
+qda.fit <- qda(TARGET_B ~ `homeowner dummy` + NUMCHLD + INCOME + `gender dummy` + HV + Icmed + Icavg
+               + IC15 + NUMPROM + RAMNTALL + MAXRAMNT + LASTGIFT + totalmonths + TIMELAG + AVGGIFT
+               ,  data = train)
+
+qda.class <- predict(qda.fit, data)$class
+count <- forcats:: fct_count(qda.class)
+nonDonors <- count$n[1]
+Donors <-  count$n[2]
+
+
+```
+
+```{r include = T }
+attach(test)
+colnames(train)
+
+qda.fit <- qda(TARGET_B ~ `homeowner dummy` + NUMCHLD + INCOME + `gender dummy` + HV + Icmed + Icavg
+               + IC15 + NUMPROM + RAMNTALL + MAXRAMNT + LASTGIFT + totalmonths + TIMELAG + AVGGIFT
+               ,  data = test)
+
+
+
+```
+
+```{r include = FALSE }
+qda.class <- predict(qda.fit, data)$class
+count <- forcats:: fct_count(qda.class)
+nonDonors.test <- count$n[1]
+Donors.test <-  count$n[2]
+
+total <- 3120
+nonDonors.test <- 1481
+Donors.test <-1639
+
+
+
+```
+
+
+```{r include = F }
+percentNotDonors.test.2 <- nonDonors.test/total
+percentDonors.test.2 <- Donors.test/total
+```
+
+#Question 2 
+By using a weighted a sample, we are able to address issues with over-sampling within the training set. It helps to address with selection issues that introduce skew and bias into the model. The specfic concern here is that bias generated from people that did not respond. To train the model, a mixuture of the responders and non-responders is needed which explains the methodlogy used. 
+
+```{r}
+#13 is the avg donation
+#cost of each mails is .68
+
+# Profit is function of quanity*price - average cost and variable cost
+totalRev <- 13*Donors.test
+totalCost <- .68 *total
+
+Profit <- totalRev - totalCost
+Profit
+
+Profit <- ((nonDonors.test*-.68)/.53) + ((Donors.test*(13 -.68))/9.8)
+
+data.frame(Profit)
+
+```
+#Question 3
+When accounting for weighting, the total profit was 160.30.
+```{r echo = F }
+library(caret)
+
+lift.1 <- lift(as.factor(TARGET_B  ) ~ `homeowner dummy` + NUMCHLD + INCOME + `gender dummy` + HV +
+                 Icmed + Icavg + IC15 + NUMPROM + RAMNTALL + MAXRAMNT + LASTGIFT + totalmonths + 
+                 TIMELAG + AVGGIFT, data = train)
+
+xyplot(lift.1)
+TARGET_B
+
+# Looks at the interaction of the binary variable and the respective probability of being donor or not
+#This interaction should be closer to the expecation of the profit than the current estimation procedure
+# without using a more rigourous approach. For instance, using Instrumental Variable approach would 
+# likely give a better result.
+
+lift.2 <- lift(as.factor(TARGET_B * percentDonors ) ~ TARGET_B*percentNotDonors, data = train)
+
+xyplot(lift.2)
+
+lift.3 <- lift(as.factor(TARGET_B * percentDonors.test.1 ) ~ TARGET_B*percentNotDonors.test.1, data = test)
+
+
+par(mfrow=c(2, 2))
+
+xyplot(lift.3)
+
+lift.4 <- lift(as.factor(TARGET_B * percentDonors.test.2 ) ~ TARGET_B*percentNotDonors.test.2, data = train)
+
+xyplot(lift.4)
+
+```
+#Question 4 
+There appears to be little difference between the models. This suggests that the underlying data 
+in the distribution does not follow a simple quadratic or linear pattern.
+
+#Question 5
+While there is not clear best model here, it is safer to use LDA as it is the more simpler model. When 
+given models with similar results,it is better to use the one that is more simple. 
+
+
+
