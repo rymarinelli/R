@@ -26,9 +26,6 @@ tdm <- TermDocumentMatrix(corp)
 
 
 
-
-
-
 ```
 #Question One '
 The data does not seem to be vary sparse. 50% of the term document matrix appears to be sparse. 
