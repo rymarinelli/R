@@ -1,0 +1,41 @@
+// Ryan Marinelli
+// January 21st 
+// Tidy Tuesday Week 4 
+
+
+spotify_songs <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-21/spotify_songs.csv')
+
+# Or read in with tidytuesdayR package (https://github.com/thebioengineer/tidytuesdayR)
+# PLEASE NOTE TO USE 2020 DATA YOU NEED TO UPDATE tidytuesdayR from GitHub
+
+# Either ISO-8601 date or year/week works!
+
+# Install via devtools::install_github("thebioengineer/tidytuesdayR")
+
+tuesdata <- tidytuesdayR::tt_load('2020-01-21') 
+tuesdata <- tidytuesdayR::tt_load(2020, week = 4)
+
+library(dplyr)
+library(ggplot2)
+
+spotify_songs <- tuesdata$spotify_songs 
+data <- spotify_songs %>% data.frame() %>% group_by(playlist_genre)
+View(data)
+ 
+
+p <- ggplot(data, aes(playlist_genre,danceability))
+q <- p + geom_jitter(aes(color = playlist_genre), width = 0.4) +
+     geom_boxplot(alpha = .7) +
+     labs(color = "Playlist Genre")
+     
+
+q <- q + xlab("Genre of Playlist")+
+     ylab("Danciability")+
+     ggtitle("Comparison of Danciability Throughout Genres")
+
+pl <- q + theme(legend.background = element_rect(fill="lightblue",
+                                            size=0.4, linetype="solid", 
+                                            colour ="darkblue"))
+
+
+pl
