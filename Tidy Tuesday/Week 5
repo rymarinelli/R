@@ -1,0 +1,49 @@
+library(magrittr)
+library(rgdal)
+library(sp)
+library(spdep)
+library(rspatial)
+library(gstat)
+library(lubridate)
+library(dplyr)
+library(tmaptools)
+
+sf_trees <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-28/sf_trees.csv')
+str(sf_trees)
+
+df <- sf_trees %>% data.frame() %>% na.omit() 
+names(df)
+
+df <- cbind(df$dbh, df$latitude,df$longitude) 
+df <- data.frame(df)
+
+colnames(df) <- c("Depth","Lat","Long")
+
+interpolate<-function(z,datatable,grid,exp){
+  idw_map<- idw(z~1, datatable, newdata=grid, idp=exp)
+  im <- as.image.SpatialGridDataFrame(idw_map) 
+  image(idw_map, "var1.pred", col=terrain.colors(20))
+  contour(idw_map, "var1.pred", add=TRUE)
+  plot(datatable, add=TRUE, pch="+")
+}
+
+coordinates(df)<-c("Lat","Long")
+
+class(df)
+
+df_grid <-spsample(df,"regular", n=3720)
+
+class(df_grid)
+
+gridded(df_grid) <- TRUE
+
+
+fullgrid(df_grid) <- TRUE
+class(df_grid)
+
+exp <- 2
+z <- df$Depth
+
+
+map <- interpolate(z,df, df_grid,exp) #call the function
+
