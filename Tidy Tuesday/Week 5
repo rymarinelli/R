@@ -8,6 +8,10 @@ library(lubridate)
 library(dplyr)
 library(tmaptools)
 
+#https://data.sfgov.org/City-Infrastructure/Street-Tree-List/tkzw-k3nq
+# https://www.sfweekly.com/news/feature/trees-of-life/
+# https://mgimond.github.io/Spatial/interpolation-in-r.html
+
 sf_trees <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-28/sf_trees.csv')
 str(sf_trees)
 
