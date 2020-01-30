@@ -23,6 +23,8 @@ df <- data.frame(df)
 
 colnames(df) <- c("Depth","Lat","Long")
 
+df <- df[sample(nrow(df), 1000), ]
+
 interpolate<-function(z,datatable,grid,exp){
   idw_map<- idw(z~1, datatable, newdata=grid, idp=exp)
   im <- as.image.SpatialGridDataFrame(idw_map) 
@@ -35,7 +37,10 @@ coordinates(df)<-c("Lat","Long")
 
 class(df)
 
-df_grid <-spsample(df,"regular", n=3720)
+
+?spsample
+
+df_grid <-spsample(df,"regular", n=1000, pretty = T)
 
 class(df_grid)
 
@@ -45,9 +50,8 @@ gridded(df_grid) <- TRUE
 fullgrid(df_grid) <- TRUE
 class(df_grid)
 
-exp <- 2
+exp <- 1
 z <- df$Depth
 
 
 map <- interpolate(z,df, df_grid,exp) #call the function
-
