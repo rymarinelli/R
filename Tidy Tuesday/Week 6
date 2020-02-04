@@ -1,6 +1,7 @@
 devtools::install_github("thebioengineer/tidytuesdayR")
 library(tidyverse)
 library(gganimate)
+library(magick)
 
 
 tuesdata <- tidytuesdayR::tt_load('2020-02-04') 
@@ -11,7 +12,6 @@ df.2 <- tuesdata$standings
 
 df <- left_join(df.1, df.2, by = c("year", "team_name", "team"))
                 
-
 
 df.3 <- df %>% select(margin_of_victory, weekly_attendance, df$week ) %>% na.omit() %>% data.frame()
 
@@ -28,16 +28,9 @@ test.1  <- p +
                 transition_states(Week,
                                       transition_length = .5 ,
                                                 state_length = 1)
-plot(test.1)
- 
-plot(anim)
+options(scipen=999)
 
-
-test.2 <- anim + 
-                ease_aes(y = 'bounce-out')
-
-
-anim <- ggplot(df, aes(x = df$Attendance, y = df$Margin)) + 
+p <- ggplot(df, aes(x = df$Attendance, y = df$Margin)) + 
           geom_point(aes(color = Week, group = Week)) + 
           transition_states(Week,
                                   transition_length = 2,
@@ -46,7 +39,21 @@ anim <- ggplot(df, aes(x = df$Attendance, y = df$Margin)) +
                                                                       exit_shrink() +
                                                                                  exit_drift(x_mod = 5)
 
+q <-  p + labs(title = "Comparision of Attendance and Point Margin",
+                   x =  "Attendance of Football Games", y = "Point Margin of Game " ) +
+                                                transition_time(Week) 
 
+l <- q +  geom_boxplot(alpha = .4) +theme(legend.background = element_rect(fill="lightblue",
+                                                                           size=0.4, linetype="solid", 
+                                                                           colour ="darkblue"))
+k <- l + theme(plot.title = element_text(face = "bold"))
 
+k <- k + labs(subtitle = "From 2000 - 2019")
+
+m <- k + theme(plot.subtitle = element_text(face = "bold"))
+
+m
+
+anim_save(filename = "TidyTuesday.gif", animation = m)
 
 
