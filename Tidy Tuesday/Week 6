@@ -17,8 +17,36 @@ df.3 <- df %>% select(margin_of_victory, weekly_attendance, df$week ) %>% na.omi
 
 
 df <- cbind(df.3$margin_of_victory, df.3$weekly_attendance, df.3$week) %>% data.frame()
- colnames(df)<- c("Margin","Attendance","Week in Season")
+ colnames(df)<- c("Margin","Attendance","Week")
  
 
-p <- ggplot(x = df$`Week in Season`, y = df$Attendance)
-plot(p)                 
+ p <- ggplot(df, aes(x = df$Attendance, y = df$Margin)) + 
+   geom_point()
+ 
+ 
+test.1  <- p + 
+                transition_states(Week,
+                                      transition_length = .5 ,
+                                                state_length = 1)
+plot(test.1)
+ 
+plot(anim)
+
+
+test.2 <- anim + 
+                ease_aes(y = 'bounce-out')
+
+
+anim <- ggplot(df, aes(x = df$Attendance, y = df$Margin)) + 
+          geom_point(aes(color = Week, group = Week)) + 
+          transition_states(Week,
+                                  transition_length = 2,
+                                                  state_length = 1) + 
+                                                                 enter_drift(x_mod = -1) + 
+                                                                      exit_shrink() +
+                                                                                 exit_drift(x_mod = 5)
+
+
+
+
+
