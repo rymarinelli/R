@@ -1,0 +1,24 @@
+devtools::install_github("thebioengineer/tidytuesdayR")
+library(tidyverse)
+library(gganimate)
+
+
+tuesdata <- tidytuesdayR::tt_load('2020-02-04') 
+tuesdata <- tidytuesdayR::tt_load(2020, week = 6)
+
+df.1 <- tuesdata$attendance
+df.2 <- tuesdata$standings
+
+df <- left_join(df.1, df.2, by = c("year", "team_name", "team"))
+                
+
+
+df.3 <- df %>% select(margin_of_victory, weekly_attendance, df$week ) %>% na.omit() %>% data.frame()
+
+
+df <- cbind(df.3$margin_of_victory, df.3$weekly_attendance, df.3$week) %>% data.frame()
+ colnames(df)<- c("Margin","Attendance","Week in Season")
+ 
+
+p <- ggplot(x = df$`Week in Season`, y = df$Attendance)
+plot(p)                 
