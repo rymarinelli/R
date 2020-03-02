@@ -1,0 +1,114 @@
+library(sf)
+library(tidygraph)
+library(igraph)
+library(dplyr)
+library(tibble)
+library(ggplot2)
+library(units)
+library(tmap)
+library(osmdata)
+library(rgrass7)
+library(link2GI)
+library(nabor)
+
+setwd("C:\Users\rmarinelli4\Desktop\gis (1)\GIS\geo\cbs")
+data <- readOGR("fietsnetwerk.shp")
+
+amsterdam <- opq(bbox =  c(4.80, 52.3, 4.90, 53.0)) %>% 
+  add_osm_feature(key = 'highway') %>% 
+  osmdata_sf() %>% 
+  osm_poly2line()
+
+amsterdam_center <- amsterdam$osm_lines %>% 
+  select("highway")
+
+ggplot(data = amsterdam_center) + geom_sf()
+
+edges <- amsterdam_center %>%
+  mutate(edgeID = c(1:n()))
+
+nodes <- edges %>%
+  st_coordinates() %>%
+  as_tibble() %>%
+  rename(edgeID = L1) %>%
+  group_by(edgeID) %>%
+  slice(c(1, n())) %>%
+  ungroup() %>%
+  mutate(start_end = rep(c('start', 'end'), times = n()/2))
+
+
+nodes <- nodes %>%
+  mutate(xy = paste(.$X, .$Y)) %>% 
+  mutate(nodeID = group_indices(., factor(xy, levels = unique(xy)))) %>%
+  select(-xy)
+
+source_nodes <- nodes %>%
+  filter(start_end == 'start') %>%
+  pull(nodeID)
+
+nodes <- nodes %>%
+  distinct(nodeID, .keep_all = TRUE) %>%
+  select(-c(edgeID, start_end)) %>%
+  st_as_sf(coords = c('X', 'Y')) %>%
+  st_set_crs(st_crs(edges))
+
+graph = tbl_graph(nodes = nodes, edges = as_tibble(edges), directed = FALSE)
+target_nodes <- nodes %>%
+  filter(start_end == 'end') %>%
+  pull(nodeID)
+
+
+sf_to_tidygraph = function(x, directed = TRUE) {
+  
+  edges <- x %>%
+    mutate(edgeID = c(1:n()))
+  
+  nodes <- edges %>%
+    st_coordinates() %>%
+    as_tibble() %>%
+    rename(edgeID = L1) %>%
+    group_by(edgeID) %>%
+    slice(c(1, n())) %>%
+    ungroup() %>%
+    mutate(start_end = rep(c('start', 'end'), times = n()/2)) %>%
+    mutate(xy = paste(.$X, .$Y)) %>% 
+    mutate(nodeID = group_indices(., factor(xy, levels = unique(xy)))) %>%
+    select(-xy)
+  
+  source_nodes <- nodes %>%
+    filter(start_end == 'start') %>%
+    pull(nodeID)
+  
+  target_nodes <- nodes %>%
+    filter(start_end == 'end') %>%
+    pull(nodeID)
+  
+  edges = edges %>%
+    mutate(from = source_nodes, to = target_nodes)
+  
+  nodes <- nodes %>%
+    distinct(nodeID, .keep_all = TRUE) %>%
+    select(-c(edgeID, start_end)) %>%
+    st_as_sf(coords = c('X', 'Y')) %>%
+    st_set_crs(st_crs(edges))
+  
+  tbl_graph(nodes = nodes, edges = as_tibble(edges), directed = directed)
+  
+}
+
+sf_to_tidygraph(amsterdam_center, directed = FALSE)
+
+edges = edges %>%
+  mutate(from = source_nodes, to = target_nodes)
+
+p <- ggplot() +
+  geom_sf(data = graph %>% activate(edges) %>% as_tibble() %>% st_as_sf()) + 
+  geom_sf(data = graph %>% activate(nodes) %>% as_tibble() %>% st_as_sf(), size = 0.5)
+
+t <- tmap_mode('view')
+  tm_shape(graph %>% activate(edges) %>% as_tibble() %>% st_as_sf()) +
+  tm_lines() +
+  tm_shape(graph %>% activate(nodes) %>% as_tibble() %>% st_as_sf()) +
+  tm_dots() +
+  tmap_options(basemaps = 'OpenStreetMap')
+  
