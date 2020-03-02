@@ -1,0 +1,26 @@
+library(rgdal)
+library(sp)
+library(spdep)
+library(sf)
+library(dplyr)
+
+
+setwd("C:/Users/rmarinelli4/Desktop/Inzameling_huisvuil_100220")
+data <- readOGR("Inzameling_huisvuil_100220.shp")
+summary(data)
+proj4string(data) <-CRS("+init=epsg:27700")
+csr <-slot(data,"proj4string")
+
+trash_data<-as(data,"data.frame")
+class(trash_data)
+head(trash_data)
+
+plot(trash_data)
+plot(data)
+
+View(data)
+
+choropleth <- spplot(data,"aanbiedwij")
+
+#Example of a coverage 
+choropleth 
