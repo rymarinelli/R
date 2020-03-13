@@ -1,0 +1,46 @@
+library(editData)
+library(shinydashboard)
+library(dashboardthemes)
+library(shiny)
+
+#Creating Dummy Data for Presentation Purposes 
+df <- data.frame(ID = c(1, 2, 3, 4, 5),
+                  var1 = c('a', 'b', 'c', 'd', 'e'),
+                  var2 = c(1, 1, 0, 0, 1))
+
+
+dbHeader <- dashboardHeader(title = "")
+dbHeader$children[[2]]$children <-  tags$a(href='https://assets1.dxc.technology/newsroom/images/dxc_logo_hz_wht_rgb_300.png',
+                                           tags$img(src='https://assets1.dxc.technology/newsroom/images/dxc_logo_hz_wht_rgb_300.png',height='40',width='200'))
+
+
+if (interactive()) {
+
+ui <- dashboardPage(
+  dbHeader, 
+  dashboardSidebar(
+    sidebarMenu(style = "position: fixed; overflow: visible;",
+      menuItem("Resources", icon = icon("database"), tabName = "rdb", startExpanded = TRUE,
+               menuSubItem("First Resource ", icon = icon("database"), tabName = "rdbi")
+               
+      )
+    )
+  ),
+  
+  dashboardBody(shinyDashboardThemes(theme = "grey_dark"), div(style = 'overflow-x: scroll',editableDTUI("table1"),
+    tabItems(
+      tabItem("rdbi", DT::dataTableOutput("table1")),
+      tabItem("rdbe", "External tab content")
+    )
+  )
+))
+
+server <- function(input, output, session) {
+  output$table1 <- DT::renderDT(df)
+  
+  
+}
+
+shinyApp(ui, server)
+
+}
