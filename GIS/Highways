@@ -17,19 +17,23 @@ library(nabor)
 setwd("C:\Users\rmarinelli4\Desktop\gis (1)\GIS\geo\cbs")
 data <- readOGR("fietsnetwerk.shp")
 
+#Adds Bounding Box based on Highways from Open Street Maps
 amsterdam <- opq(bbox =  c(4.80, 52.3, 4.90, 53.0)) %>% 
   add_osm_feature(key = 'highway') %>% 
   osmdata_sf() %>% 
   osm_poly2line()
 
+#Selects contours of Highways 
 amsterdam_center <- amsterdam$osm_lines %>% 
   select("highway")
 
 ggplot(data = amsterdam_center) + geom_sf()
 
+#Creates edges
 edges <- amsterdam_center %>%
   mutate(edgeID = c(1:n()))
 
+#Creates nodes based on grouping of edges through their IDs
 nodes <- edges %>%
   st_coordinates() %>%
   as_tibble() %>%
@@ -39,7 +43,7 @@ nodes <- edges %>%
   ungroup() %>%
   mutate(start_end = rep(c('start', 'end'), times = n()/2))
 
-
+#Keeps track for computation of particular nodes
 nodes <- nodes %>%
   mutate(xy = paste(.$X, .$Y)) %>% 
   mutate(nodeID = group_indices(., factor(xy, levels = unique(xy)))) %>%
