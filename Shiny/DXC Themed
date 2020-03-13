@@ -9,7 +9,7 @@ df <- data.frame(ID = c(1, 2, 3, 4, 5),
                   var2 = c(1, 1, 0, 0, 1))
 
 
-dbHeader <- dashboardHeader(title = "")
+dbHeader <- dashboardHeader(title = "Removed for Privacy Reasons")
 dbHeader$children[[2]]$children <-  tags$a(href='https://assets1.dxc.technology/newsroom/images/dxc_logo_hz_wht_rgb_300.png',
                                            tags$img(src='https://assets1.dxc.technology/newsroom/images/dxc_logo_hz_wht_rgb_300.png',height='40',width='200'))
 
