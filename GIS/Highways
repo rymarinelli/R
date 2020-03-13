@@ -11,6 +11,9 @@ library(rgrass7)
 library(link2GI)
 library(nabor)
 
+# Referenced this R-Bloggers Post to create Graph based Map 
+# https://www.r-bloggers.com/spatial-networks-in-r-with-sf-and-tidygraph/
+
 setwd("C:\Users\rmarinelli4\Desktop\gis (1)\GIS\geo\cbs")
 data <- readOGR("fietsnetwerk.shp")
 
