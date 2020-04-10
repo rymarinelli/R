@@ -1,0 +1,57 @@
+library(tidyverse)
+library(readr)
+library(forcats)
+library(rlist)
+setwd("C:/Users/ryanm/Desktop/NTNU Interview")
+
+Environmental_footprints_Data_Explorer_1_ <- read_csv("Environmental footprints Data Explorer (1).csv")
+df <- Environmental_footprints_Data_Explorer_1_ 
+df <- df %>% group_by(Year, Sector) %>% summarise(Summation = sum(Value))
+
+#First Step is to calculate Final Demand 
+df %>% View()
+
+#Total Production Values By Year 
+Total = df %>% group_by(Year) %>% filter(Sector == "Total")
+
+#Summation of CO2 Per Group
+Values = df %>% group_by(Year) %>%  filter(Sector != "Total")
+
+
+data = data.frame()
+total_Data = as.numeric()
+coef <- data.frame()
+
+# Multipler <- function(x)
+# {
+#    data <<- .GlobalEnv$Values %>% filter(Year == x) %>% data.frame()
+#    total_Data <<- .GlobalEnv$Total %>% filter(Year == x) %>% data.frame()
+#    coef <<-  data$Summation/total_Data$Summation 
+#    return(cbind(data$Year,data$Sector,data$Summation, coef) %>% data.frame())
+# }
+# 
+# ndf = data.frame()
+# 
+# for(i in 1995:2012)
+# {
+#    ndf <- rbind(ndf,Multipler(i))
+# }
+
+colnames(ndf) <- c("Year","Segment","Segment Total", "Multipler")
+
+getOutput <- function(x)
+{
+   data <<- .GlobalEnv$Values %>% filter(Year == x) %>% data.frame()
+   total_Data <<- .GlobalEnv$Total %>% filter(Year == x) %>% data.frame()
+   return(cbind(data$Year,data$Sector,data$Summation, total_Data) %>% data.frame())
+}
+
+
+getOutput(1995) %>% View()
+for(i in 1995:2012)
+    {
+       ndf <- cbind(ndf,getOutput(i))
+}
+
+ndf %>% View()
+
