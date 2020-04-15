@@ -1,0 +1,13 @@
+df <- readr:: read_delim("C:/Users/rmarinelli4/Desktop/values.tsv", 
+                     "\t", escape_double = FALSE, trim_ws = TRUE)
+#test <- values$Value %>% stringr::str_split(,pattern = "USD") %>% View()
+test <- tidyr::separate(df, Value, into = c("Value","Currency"), sep = " (?=[^ ]+$)")
+
+currency <- gsub("Mill", " ", test$Currency)
+
+test <- cbind(test,currency)
+test %>% View()
+
+dplyr::if_else(str_match(test$, "gr(?€"))
+
+str_match(test$currency, "(?€)")
