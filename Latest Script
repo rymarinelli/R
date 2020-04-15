@@ -1,16 +1,20 @@
 
 cleanData <- function(x)
 {
-  kg <- c("tidyverse, stringr")
+  pkg <- c("tidyverse, stringr")
   new.pkg <- pkg[!(pkg %in% installed.packages())]
-  if (length(new.pkg)) {
+  
+  if (length(new.pkg)) 
+  {
     install.packages(new.pkg,dependencies=T)
   }
   
   library(stringr)
   library(tidyverse)
-
-  df <- readr:: read_delim("C:/Users/rmarinelli4/Desktop/values.tsv", 
+  
+  #"C:/Users/rmarinelli4/Desktop/values.tsv",
+  
+  df <- readr:: read_delim(file.choose(), 
                          "\t", escape_double = FALSE, trim_ws = TRUE)
 
   options(scipen=999)
