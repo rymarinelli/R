@@ -1,71 +1,95 @@
-df <- readr:: read_delim("C:/Users/rmarinelli4/Desktop/values.tsv", 
+
+cleanData <- function(x)
+{
+  kg <- c("tidyverse, stringr")
+  new.pkg <- pkg[!(pkg %in% installed.packages())]
+  if (length(new.pkg)) {
+    install.packages(new.pkg,dependencies=T)
+  }
+  
+  library(stringr)
+  library(tidyverse)
+
+  df <- readr:: read_delim("C:/Users/rmarinelli4/Desktop/values.tsv", 
                          "\t", escape_double = FALSE, trim_ws = TRUE)
 
-df <- df %>% mutate(currency = if_else(str_detect(df$Value, "(?>€|Euro)"), "Euro", "USD"))
+  options(scipen=999)
+
+
+  df <- df %>% mutate(currency = if_else(str_detect(df$Value, "(?>€|Euro)"), "Euro", "USD"))
 
 
 
-m <- str_detect(test$Value, "Mill")
-b = str_detect(test$Value, "Bill")
-s = str_detect(df$Value, "[[:digit:]][[:digit:]]E[[:digit:]]")
+  m <- str_detect(df$Value, "Mill")
+  b = str_detect(df$Value, "Bill")
+  s = str_detect(df$Value, "[[:digit:]][[:digit:]]E[[:digit:]]")
 
-df <- cbind(df,m, b,s)
-df$Value <- gsub("Mill|Million|Millions|Bill|Billion|Billions|Euro|Euros|USD|$|€", " ", df$Value)
+  df <- cbind(df,m, b,s)
+  df$Value <- gsub("Mill|Million|Millions|Bill|Billion|Billions|Euro|Euros|USD|$|€", " ", df$Value)
 
 
-sciget <- function(x)
-{
-  value = which(df$s == TRUE) %>% na.omit()
-  value = value %>% as.vector()
+  sciget <- function(x)
+  {
+    value = which(df$s == TRUE) %>% na.omit()
+    value = value %>% as.vector()
   
-  sci = str_extract(df$Value, "[[:digit:]][[:digit:]]E[[:digit:]]") %>% na.omit()
-  sci = gsub("E", " ", sci)
-  sci = sci %>% data.frame()
-  colnames(sci) <- "Value"
-  sci = separate(sci, Value, into = c("First","Second"), sep = " (?=[^ ]+$)")
+    sci = str_extract(df$Value, "[[:digit:]][[:digit:]]E[[:digit:]]") %>% na.omit()
+    sci = gsub("E", " ", sci)
+    sci = sci %>% data.frame()
+    colnames(sci) <- "Value"
+    sci = separate(sci, Value, into = c("First","Second"), sep = " (?=[^ ]+$)")
   
-  for(i in 1:length(value))
-  {  
-    .GlobalEnv$df[value[i],2] =  as.numeric(sci[i,1]) ** as.numeric(sci[i,2])
+    for(i in 1:length(value))
+    {  
+      .GlobalEnv$df[value[i],2] =  as.numeric(sci[i,1]) ** as.numeric(sci[i,2])
+      
+    }
+  
+  }
+
+  sciget()
+
+  df$Value <- str_remove_all(df$Value, ",")
+  df$Value <- gsub("[\\$,]", "", df$Value)
+
+
+
+  getMil <- function(x)
+  {
+    value = which(df$m == TRUE) %>% na.omit()
+    value = value %>% as.vector()
     
+    for(i in 1:length(value))
+    {  
+      .GlobalEnv$df[value[i],2]  <-  as.numeric(.GlobalEnv$df[value[i],2]) * 1000000
+    }
+  
   }
+
+
+  getBil <- function(x)
+  {
+    value = which(df$b == TRUE) %>% na.omit()
+    value = value %>% as.vector()
+  
+    for(i in 1:length(value))
+    {  
+      .GlobalEnv$df[value[i],2] =  as.numeric(.GlobalEnv$df[value[i],2])* 1000000000
+    }
   
 }
+  getMil()
+  getBil()
 
-getMil <- function(x)
-{
-  value = which(df$m == TRUE) %>% na.omit()
-  value = value %>% as.vector()
-  
-  
-  for(i in 1:length(value))
-  {  
-    .GlobalEnv$df[value[i],2] =  .GlobalEnv$df[value[i],2]*1000000
+  df$m <- NULL
+  df$b <- NULL
+  df$s <- NULL
 
-  }
+  df$Value = as.double(df$Value)
   
+  write.table(df," cleanedData.tsv", sep = "\t",
+              row.names = FALSE, col.names = TRUE)
+
 }
 
-
-getBil <- function(x)
-{
-  value = which(df$m == TRUE) %>% na.omit()
-  value = value %>% as.vector()
-  
-  
-  for(i in 1:length(value))
-  {  
-    .GlobalEnv$df[value[i],2] =  .GlobalEnv$df[value[i],2]*1000000000
-    
-  }
-  
-}
-
-
-sciget()
-
-df %>% View()
-
-df$s <- NULL
-
-df = df %>% transmute(df$Value,if_else(isTRUE(df$m), Value*1000000000, value * 1.0))
+cleanData()
