@@ -1,0 +1,108 @@
+
+cleanData <- function(x)
+{
+  pkg <- c("tidyverse, stringr")
+  new.pkg <- pkg[!(pkg %in% installed.packages())]
+  
+  if (length(new.pkg)) 
+  {
+    install.packages(new.pkg,dependencies=T)
+  }
+  
+  library(stringr)
+  library(tidyverse)
+  
+  
+  
+  #"C:/Users/rmarinelli4/Desktop/values.tsv",
+  
+  df <- readr:: read_delim(file.choose(), 
+                           "\t", escape_double = FALSE, trim_ws = TRUE)
+  
+
+  
+  df <- df %>% mutate(currency = if_else(str_detect(df$Value, "(?>€|Euro)"), "Euro", "USD"))
+  
+  
+  
+  m <- str_detect(df$Value, "Mill")
+  b = str_detect(df$Value, "Bill")
+  s = str_detect(df$Value, "[[:digit:]][[:digit:]]E[[:digit:]]")
+  
+  df <- cbind(df,m, b,s)
+  df$Value <- gsub("Mill|Million|Millions|Bill|Billion|Billions|Euro|Euros|USD|$|€", " ", df$Value)
+  row = integer()
+  
+  sciget <- function(x)
+  {
+    value = which(df$s == TRUE) %>% na.omit()
+    value = value %>% as.vector()
+    
+    sci = str_extract(df$Value, "[[:digit:]][[:digit:]]E[[:digit:]]") %>% na.omit()
+    sci = gsub("E", " ", sci)
+    sci = sci %>% data.frame()
+    colnames(sci) <- "Value"
+    sci = separate(sci, Value, into = c("First","Second"), sep = " (?=[^ ]+$)")
+    
+    for(i in 1:length(value))
+    {  .GlobalEnv$row = i 
+      .GlobalEnv$df[value[i],2] =  as.numeric(sci[row,1]) ** as.numeric(sci[row,2])
+      
+    }
+    
+  }
+  
+  sciget()
+  
+  df$Value <- str_remove_all(df$Value, ",")
+  df$Value <- gsub("[\\$,]", "", df$Value)
+  
+  
+  
+  getMil <- function(x)
+  {
+    value = which(.GlobalEnv$df$m == TRUE) %>% na.omit()
+    value = value %>% as.vector()
+    
+    for(i in 1:length(value))
+    {  
+      .GlobalEnv$df[value[i],2]  <-  as.numeric(.GlobalEnv$df[value[i],2]) * 1000000
+    }
+    
+  }
+  
+  row = NULL
+  row = int()
+  
+  getBil <- function(x)
+  {
+    value = which(.GlobalEnv$df$b == TRUE) %>% na.omit()
+    value = value %>% as.vector()
+    
+    for(i in 1:length(value))
+    {  row = i
+      .GlobalEnv$df[value[.GlobalEnv$row],2] <- as.numeric(.GlobalEnv$df[value[.GlobalEnv$row],2])* 1000000000
+    }
+    
+  }
+  
+  getMil()
+  getBil()
+  
+ 
+  df$m <- NULL
+  df$b <- NULL
+  df$s <- NULL
+  row <- NULL
+  
+  df$Value = as.numeric(df$Value)
+  options(scipen=999)
+  
+  #write.table(df," cleanedData.tsv", sep = "\t",
+  #            row.names = FALSE, col.names = TRUE)
+  
+  df %>% View()
+  
+}
+
+cleanData()
