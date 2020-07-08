@@ -31,7 +31,7 @@ a <- ggplot(df_1, aes(x = df_1$country_of_origin, y = df_1$average_coffee_points
 a <- a + geom_point(color = "#DEB887")+ theme(axis.text.x=element_text(angle=90 ,margin = margin(.5, unit = "cm"),vjust =1))
 a <- a + xlab("Countries With Worst Coffee") + ylab("Coffee Quality Score")
 a <- a + ylim(75, 90)
-a <- a + 
+
 
 b <- ggplot(df_2, aes(x = df_2$country_of_origin, y = df_2$average_coffee_points, ))
 b <- b + geom_point(color = "#CD853F") + theme(axis.text.x=element_text(angle=90 ,margin = margin(.5, unit = "cm"),vjust =1))
