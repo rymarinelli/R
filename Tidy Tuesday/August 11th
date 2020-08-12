@@ -1,0 +1,23 @@
+library(dplyr)
+library(magrittr)
+
+avatar <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-08-11/avatar.csv')
+df <- avatar
+df %>% colnames()
+df <- df %>% group_split(book)
+
+earth <- df[1] %>%  data.frame()
+fire <- df[2] %>% data.frame()
+water <- df[3] %>% data.frame()
+
+
+# Which characters speak the most per ep and how it relates to score 
+earth <- earth %>% select(chapter_num,character, character_words, imdb_rating) %>% na.omit()
+fire <-  fire %>% select(chapter_num,character, character_words, imdb_rating) %>% na.omit()
+water <- water %>% select(chapter_num,character, character_words, imdb_rating) %>% na.omit()
+
+water <- mutate(water, word_freq = lengths(strsplit(character_words, '\\S+')))
+earth <- mutate(earth, word_freq = lengths(strsplit(character_words, '\\S+')))
+fire <-  mutate(fire, word_freq = lengths(strsplit(character_words, '\\S+')))
+
+water  %>% summarise(across(c(chapter_num, character), ~ sum(word_freq, na.rm = TRUE)))
