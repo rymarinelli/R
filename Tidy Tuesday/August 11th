@@ -1,23 +1,55 @@
 library(dplyr)
 library(magrittr)
+library(ggplot2)
+library(gganimate)
+library(gifski)
 
 avatar <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-08-11/avatar.csv')
 df <- avatar
 df %>% colnames()
-df <- df %>% group_split(book)
 
-earth <- df[1] %>%  data.frame()
-fire <- df[2] %>% data.frame()
-water <- df[3] %>% data.frame()
+df <- filter(df, df$character == "Katara"  | df$character == "Aang" | 
+               df$character == "Sokka" | df$character == "Zuko"| df$character == 'Toph')
+
+
+#earth <- filter(df, df$book == 'Earth') %>% data.frame()
+#fire <-  filter(df, df$book == 'Fire') %>% data.frame()
+#water <- filter(df, df$book == 'Water') %>% data.frame()
 
 
 # Which characters speak the most per ep and how it relates to score 
-earth <- earth %>% select(chapter_num,character, character_words, imdb_rating) %>% na.omit()
-fire <-  fire %>% select(chapter_num,character, character_words, imdb_rating) %>% na.omit()
-water <- water %>% select(chapter_num,character, character_words, imdb_rating) %>% na.omit()
+df <- df %>% select(chapter_num,character, character_words, imdb_rating, book) %>% na.omit()
 
-water <- mutate(water, word_freq = lengths(strsplit(character_words, '\\S+')))
-earth <- mutate(earth, word_freq = lengths(strsplit(character_words, '\\S+')))
-fire <-  mutate(fire, word_freq = lengths(strsplit(character_words, '\\S+')))
 
-water  %>% summarise(across(c(chapter_num, character), ~ sum(word_freq, na.rm = TRUE)))
+df <- mutate(df, word_freq = lengths(strsplit(character_words, '\\S+')))
+
+
+df <- df %>%  group_by(character, chapter_num, imdb_rating, book) %>% summarise( total = sum(word_freq))
+df %>% View()
+
+# X = Time
+# Y =  Score 
+# Line groups are characters
+
+dim(df)
+val = 1:256 %>% data.frame()
+df <- cbind(df,val)
+names(df)[6] <- 'Index'
+
+
+(static <- ggplot(df, aes(chapter_num, total, color = character)) +
+  geom_line() +  facet_wrap(~book) + xlab("Chapter") + ylab("Frequency of Words") + ggtitle("Frequency of Words Across Avatar Per Character")
+)
+
+dynamic <- static + transition_reveal(chapter_num)
+
+animate(dynamic, duration = 5, fps = 20, width = 400, height = 400, renderer = gifski_renderer())
+
+anim_save("Avatar.gif")
+
+
+
+plot <- ggplot(df, aes(chapter_num, total, color = character)) +
+    geom_line() +  facet_wrap(~book) + xlab("Chapter") + ylab("Frequency of Words") + ggtitle("Frequency of Words Across Avatar Per Character")
+
+plot
