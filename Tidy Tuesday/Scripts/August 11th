@@ -12,10 +12,6 @@ df <- filter(df, df$character == "Katara"  | df$character == "Aang" |
                df$character == "Sokka" | df$character == "Zuko"| df$character == 'Toph')
 
 
-#earth <- filter(df, df$book == 'Earth') %>% data.frame()
-#fire <-  filter(df, df$book == 'Fire') %>% data.frame()
-#water <- filter(df, df$book == 'Water') %>% data.frame()
-
 
 # Which characters speak the most per ep and how it relates to score 
 df <- df %>% select(chapter_num,character, character_words, imdb_rating, book) %>% na.omit()
@@ -26,10 +22,6 @@ df <- mutate(df, word_freq = lengths(strsplit(character_words, '\\S+')))
 
 df <- df %>%  group_by(character, chapter_num, imdb_rating, book) %>% summarise( total = sum(word_freq))
 df %>% View()
-
-# X = Time
-# Y =  Score 
-# Line groups are characters
 
 dim(df)
 val = 1:256 %>% data.frame()
