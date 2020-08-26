@@ -1,0 +1,36 @@
+library(tidyverse)
+library(tm)
+library("SnowballC") 
+library("wordcloud")
+#devtools::install_github("lchiffon/wordcloud2")
+library(wordcloud2)
+library(gganimate)
+library(gifski)
+
+chopped <- readr::read_tsv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-08-25/chopped.tsv')
+df <- chopped
+df <- df$dessert
+docs <- Corpus(VectorSource(df))
+toSpace <- content_transformer(function (x , pattern ) gsub(pattern, "", x))
+docs <- tm_map(docs, toSpace, ":")
+docs <- tm_map(docs, toSpace, "-")
+docs <- tm_map(docs, stripWhitespace)
+dtm <- TermDocumentMatrix(docs)
+m <- as.matrix(dtm)
+v <- sort(rowSums(m),decreasing=TRUE)
+d <- data.frame(word = names(v),freq=v)
+row.names(d) <- NULL
+d 
+wordcloud(words = d$word, freq = d$freq, min.freq = 1,
+          max.words=50, random.order=FALSE, rot.per=0.35, 
+          colors=brewer.pal(8, "Dark2"))
+
+wordcloud2(d, color = "random-light", backgroundColor = "grey")
+
+path = '/Users/ryanm/Desktop/knife.png'
+
+
+figPath = system.file(path, package = "wordcloud2")
+
+cloud <- wordcloud2(d, figPath = '/Users/ryanm/Desktop/cake.png' , size = 1.5 ,color = "brown",  backgroundColor="gray" )
+
