@@ -1,0 +1,32 @@
+---
+title: "Baseball Analysis"
+author: "Ryan Marinelli"
+date: "9/7/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(Lahman)
+library(tidyverse)
+```
+
+```{r}
+data(Salaries)
+data(Batting)
+data(People)
+
+People %>% data.frame()
+Batting %>% data.frame()
+People %>% data.frame()
+```
+
+```{r}
+df <- full_join(People,Batting, by = 'playerID')
+df <- full_join(df, Salaries, by = 'playerID')
+df <- df %>% na.omit()
+```
+
