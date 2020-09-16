@@ -4,7 +4,7 @@
 <h5> Use ARCH model to estimate how player's performance and the the performance of the team affect salaries.</h5>
 <h5> Data is stationary and LM tests suggest ARCH/GARCH should be used </h5>
 
-<h5>Data</h5>
+## Data
 <h5>The data is from the Lahman dataset and runs from 1985-2016.</h5> 
 
 ## Event Info
