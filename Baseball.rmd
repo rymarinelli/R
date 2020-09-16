@@ -1,0 +1,216 @@
+---
+title: "Baseball Analysis"
+author: "Ryan Marinelli"
+date: "9/7/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
+```
+
+```{r}
+#Installs packages if not installed
+list.of.packages <- c("Lahman", "tidyverse","aTSA", "FinTS","sandwich","ggfortify",
+                      "dynlm","tseries")
+
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+
+library(Lahman)
+library(tidyverse)
+```
+
+```{r include = FALSE}
+data(Salaries)
+data(Batting)
+data(People)
+
+People %>% data.frame()
+Batting %>% data.frame()
+People %>% data.frame()
+```
+
+
+```{r include = FALSE}
+#Remove Scienific Notation
+options(scipen = 999)
+```
+
+
+```{r include = FALSE}
+#Preparing Consumer-Price Index to Normalize Salary Information
+
+test <- readr::read_csv('https://raw.githubusercontent.com/rymarinelli/R/master/Baseball%20Analysis/CPIAUCSL%20(1).csv')
+
+start = 1
+end = 12
+count = 1985
+CPI <- c()
+
+
+while(start <= 373)
+{
+  print('year')
+  print(count)
+  value <- test[start:end,]$CPIAUCSL %>% mean()
+  CPI <- c(CPI, value)
+  count = count + 1
+  start = start + 12
+  end = end +  12
+}
+
+
+
+CPI <- cbind(1985:2016 %>% data.frame(), CPI)
+
+
+CPI<- CPI %>% data.frame
+
+CPI[dim(CPI)[1], 2] <- test[373:373,2]
+```
+
+##Normalizing Salary By Putting All Salaries in 2015 Dollars
+```{r}
+colnames(CPI) <- c("yearID","CPI")
+Salaries <- dplyr::inner_join(CPI, Salaries, by = "yearID")
+Salaries <- Salaries %>% mutate(adjusted_salary = ((filter(Salaries, yearID == 2015)[1,][,2] %>% as.numeric())/CPI)*salary) 
+  
+
+```
+
+
+##Observing Salaries to Speculate on autocorrelation 
+```{r}
+ggplot(Salaries, aes(yearID, adjusted_salary)) +
+  geom_line()
+
+```
+```{r include = FALSE}
+
+#Joing Salary and People 
+df <- inner_join(People,Batting, by = 'playerID')
+df %>% colnames()
+rm(Batting)
+rm(People)
+CPI <- NULL
+
+
+df <- dplyr::inner_join(df, Salaries, by = c('yearID','playerID'))
+
+
+df <- df %>% rename(teamID = teamID.x)
+df <- df %>% unique()
+df <- df %>% select(nameGiven, yearID, adjusted_salary, teamID, bats, G, AB, R, H, X2B, X3B, HR,RBI, SB, CS, BB, SO, IBB, HBP, SH, SF, GIDP) %>% 
+              arrange(yearID) %>% unique() 
+```
+
+
+
+```{r include = FALSE}
+#Joining Team Info on Salary
+data("Teams")
+df.1 <- Teams %>% select(teamID, Rank, W, L, yearID)
+df <- inner_join(df,df.1, by = c("yearID","teamID"))
+df %>% head(n = 100)
+```
+
+```{r include = FALSE}
+# Making binary variable to determine performance of the team based on rank 
+
+test <- df %>% select(teamID, yearID, Rank) 
+test_B <- test %>% arrange(yearID) %>% group_by(teamID) %>% mutate(rank_diff = Rank - lag(Rank))
+test_B <- test_B %>% unique()
+
+
+test_B <- test_B %>% mutate(marker = if_else(rank_diff == 0, 0, 1 ))
+test_B <- test_B[test_B$marker == 1,] %>% na.omit() 
+test_B <- test_B %>% mutate(rank_delta = if_else(rank_diff > 0, 1, 0))
+
+# Pos increase is a better rank
+# Neg number is increasing rank
+rank_Data <- test_B %>% select(yearID,teamID, rank_delta)
+df <- inner_join(df,rank_Data, by = c("yearID","teamID"))
+df %>% head()
+
+df <- df %>% group_by(nameGiven,yearID) %>%  mutate(batting_Average = if_else(AB == 0, 0, H/AB)) 
+
+df <- df %>% group_by(nameGiven,yearID) %>%  mutate(homerun_Average = if_else(AB == 0, 0, HR/AB))
+```
+
+```{r include = False}
+viz_data <- df
+df %>% colnames
+df <- df %>% select(yearID, nameGiven, adjusted_salary, batting_Average, homerun_Average, rank_delta, W, L)
+df <- df %>% na.omit()
+```
+
+
+#Model Building
+## Testing for Autocorrelation with Dickey-Fueller Test on Each variable 
+## Each variable appears to be stationary as you may reject the null hypothesis
+```{r include= FALSE}
+library(aTSA)
+# All stationary 
+results <- lapply(df[,3:length(df)],adf.test)
+results
+```
+
+```{r}
+freq = df$nameGiven %>% unique() %>% length()
+df$nameGiven <- NULL
+df$teamID <- NULL
+
+```
+
+## LM Test Suggest Heteroskedasciity 
+```{r}
+library(FinTS)
+library(sandwich)
+
+df <- ts(df, start= 1986, end = 2016, frequency = freq) 
+
+
+ArchTest(df, lags=1, demean=TRUE)
+ArchTest(df, lags=2, demean=TRUE)
+ArchTest(df, lags=3, demean=TRUE)
+```
+
+```{r}
+library(ggfortify)
+library(dynlm)
+
+AR1 <- dynlm(adjusted_salary ~ batting_Average + homerun_Average + L(rank_delta) + W + L, 
+      data = df, start = 1986, end = 2016)
+
+
+AR2 <-  dynlm(adjusted_salary ~ batting_Average + homerun_Average + L(rank_delta, 2) + W + L, data = df, start = 1986, end = 2016)
+
+AR3 <- dynlm(adjusted_salary ~ batting_Average + homerun_Average + L(rank_delta, 3) + W + L, data = df, start = 1986, end = 2016)
+
+```
+
+## Variance of the residuals seems to be clustered intertemporally. The crests of each wave is similar. It appears that ARCH would be better than GARCH here. There does not seem to be a compelling argument for previous year's seasons to more significantly affect current year's salary. Also the circumstances in baseball change yearly, thus domain knowledege also supports using ARCH.   
+```{r}
+AR1$residuals  %>% autoplot(facets = F)
+
+```
+
+```{r include = FALSE}
+AR2$residuals %>% plot()
+```
+
+```{r include = FALSE}
+AR3$residuals %>% autoplot(facets = F)
+
+```
+
+```{r}
+pacf(df[,2])
+```
+
+```{r}
+library(tseries)
+arch.model.1 <- garch(df[,2],c(0,1))
+```
+
