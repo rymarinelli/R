@@ -6,6 +6,7 @@
 
 ## Data
 <h5>The data is from the Lahman dataset and runs from 1985-2016.</h5> 
+<h5> CPI index for salary normalization is from FRED </h5>
 
 ## Event Info
 <h5>Analysis is being conducted as part of a submission to give a poster talk with the University of Connecticut
