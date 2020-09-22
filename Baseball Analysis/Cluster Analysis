@@ -1,0 +1,25 @@
+library(tidyverse)
+# https://uc-r.github.io/hc_clustering
+#https://uc-r.github.io/kmeans_clustering
+
+df <- readr::read_csv('https://raw.githubusercontent.com/rymarinelli/R/master/Baseball%20Analysis/Data_Viz.csv')
+df <- df %>% data.frame()
+df %>% colnames()
+cluster <- df %>% select(nameGiven,adjusted_salary,rank_delta,batting_Average,homerun_Average, RBI)
+names <- cluster$nameGiven
+cluster <- cluster %>% as.matrix()
+rownames(cluster) <- make.names(names, unique=TRUE)
+cluster <- cluster %>% data.frame()
+cluster$nameGiven <- NULL
+
+cluster$adjusted_salary <- cluster$adjusted_salary %>% as.numeric()
+cluster$rank_delta <- cluster$rank_delta  %>% as.numeric()
+cluster$batting_Average <- cluster$batting_Average  %>% as.numeric()
+cluster$homerun_Average <- cluster$homerun_Average  %>% as.numeric()
+cluster$RBI <- cluster$RBI  %>% as.numeric()
+
+cluster <- scale(cluster)
+
+d <- dist(df, method = "euclidean")
+
+hc1 <- hclust(d, method = "ward.D” )
