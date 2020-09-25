@@ -1,25 +1,47 @@
 library(tidyverse)
+library(cluster)
+library(factoextra)
+
 # https://uc-r.github.io/hc_clustering
 #https://uc-r.github.io/kmeans_clustering
+# http://www.sthda.com/english/wiki/beautiful-dendrogram-visualizations-in-r-5-must-known-methods-unsupervised-machine-learning
+# https://rpubs.com/gaston/dendrograms
 
 df <- readr::read_csv('https://raw.githubusercontent.com/rymarinelli/R/master/Baseball%20Analysis/Data_Viz.csv')
 df <- df %>% data.frame()
 df %>% colnames()
-cluster <- df %>% select(nameGiven,adjusted_salary,rank_delta,batting_Average,homerun_Average, RBI)
-names <- cluster$nameGiven
+cluster <- df %>% select(teamID,adjusted_salary,rank_delta,batting_Average,homerun_Average, RBI)
+cluster <- cluster %>% group_by(teamID) %>% summarise(adjusted_salary = mean(adjusted_salary), batting_Average = mean(batting_Average)*100, homerun_Average = mean(HR))
+
+names <- cluster$teamID
+
+
+
+
 cluster <- cluster %>% as.matrix()
 rownames(cluster) <- make.names(names, unique=TRUE)
 cluster <- cluster %>% data.frame()
-cluster$nameGiven <- NULL
+cluster$teamID<- NULL
+cluster$homerun_Average
+
+#cluster$batting_Average <- cluster$batting_Average * 100
 
 cluster$adjusted_salary <- cluster$adjusted_salary %>% as.numeric()
-cluster$rank_delta <- cluster$rank_delta  %>% as.numeric()
 cluster$batting_Average <- cluster$batting_Average  %>% as.numeric()
 cluster$homerun_Average <- cluster$homerun_Average  %>% as.numeric()
-cluster$RBI <- cluster$RBI  %>% as.numeric()
 
 cluster <- scale(cluster)
+fviz_nbclust(cluster, kmeans, method = "silhouette")
 
-d <- dist(df, method = "euclidean")
 
-hc1 <- hclust(d, method = "ward.D” )
+k2 <- kmeans(cluster, centers = 7, nstart = 25)
+#cluster.2 <- fviz_cluster(k2, data = cluster, labelsize = 10)
+#cluster.2
+
+
+
+#cluster <- scale(cluster)
+
+#d <- dist(cluster, method = "euclidean")
+
+#hc1 <- hclust(d, method = "ward.D” )
