@@ -1,0 +1,101 @@
+---
+title: "Cluster"
+author: "Ryan Marinelli"
+date: "9/26/2020"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r include =FALSE}
+library(tidyverse)
+library(cluster)
+library(factoextra)
+```
+
+```{r include =FALSE}
+df <- readr::read_csv('https://raw.githubusercontent.com/rymarinelli/R/master/Baseball%20Analysis/Data_Viz.csv')
+df <- df %>% data.frame()
+df %>% colnames()
+cluster <- df %>% select(teamID,adjusted_salary,batting_Average,homerun_Average, RBI)
+cluster <- cluster %>% group_by(teamID) %>% summarise(adjusted_salary = mean(adjusted_salary), batting_Average = mean(batting_Average)*100, homerun_Average = mean(homerun_Average), RBI = mean(RBI))
+
+```
+
+
+```{r include =FALSE}
+names <- cluster$teamID
+cluster <- unique(cluster)
+cluster <- cluster %>% as.matrix()
+rownames(cluster) <- make.names(names, unique=TRUE)
+cluster <- cluster %>% data.frame()
+cluster$teamID<- NULL
+```
+
+```{r include =FALSE}
+cluster$adjusted_salary <- cluster$adjusted_salary %>% as.numeric()
+cluster$batting_Average <- cluster$batting_Average  %>% as.numeric()
+cluster$homerun_Average <- cluster$homerun_Average  %>% as.numeric()
+cluster$RBI <- cluster$RBI %>% as.numeric()
+```
+
+<h5>
+Clustering Algorithm is using RBI, batting average, average number of homeruns and salary to group teams.
+The goal in part of this analysis is to determine which teams are using their funds most effectively. 
+</h5>
+```{r echo=FALSE}
+cluster <- scale(cluster)
+fviz_nbclust(cluster, kmeans, method = "silhouette")
+```
+
+```{r include =FALSE}
+k2 <- kmeans(cluster, centers = 5, nstart = 25)
+cluster.2 <- fviz_cluster(k2, data = cluster, labelsize = 10)
+```
+
+<h5>
+In parition clustering, K-Means is grouping like team teams based on batting performance and salary of their players. 
+. The data suggested that a natural partion would be 5 different grouping. It seems like New York is an outlier which is not suprising.
+</h5>
+```{r echo = F}
+cluster.2
+```
+
+```{r include = FALSE}
+d <- dist(cluster, method = "euclidean")
+
+m <- c( "average", "single", "complete", "ward")
+names(m) <- c( "average", "single", "complete", "h4 ward")
+
+# function to compute coefficient
+ac <- function(x) {
+  agnes(d, method = x)$ac
+}
+
+map_dbl(m, ac)
+```
+
+```{r include=FALSE}
+hc3 <- agnes(cluster, method = "ward")
+h3 <-pltree(hc3, cex = 0.6, hang = -1, main = "Baseball Team Batting Ability")
+```
+<h5>
+In hierarchial clustering, we can observe the relationships a bit more clearly. 
+It appears PHI is most similar to San Diego's team which is interesting
+</h5>
+```{r echo=FALSE}
+hc3 <- agnes(cluster, method = "ward")
+h3 <-pltree(hc3, cex = 0.6, hang = -1, main = "Baseball Team Batting Ability")
+rect.hclust(hc3, k = 4, border = 2:5)
+```
+
