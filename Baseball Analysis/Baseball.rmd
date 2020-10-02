@@ -63,8 +63,12 @@ Salaries <- Salaries %>% mutate(adjusted_salary = ((filter(Salaries, yearID == 2
 
 ##Observing Salaries to Speculate on autocorrelation 
 ```{r}
-ggplot(Salaries, aes(yearID, adjusted_salary)) +
-  geom_line()
+options(scipen=999)
+Salaries$adjusted_salary <- Salaries$adjusted_salary/1000000
+Salaries <- dplyr::rename(Salaries,'Leagues' =  'lgID')
+p <- ggplot(Salaries, aes(yearID, adjusted_salary)) + ylab("Mean Salary in 2015 Dollars in Millions") + xlab("Years") + ggtitle("Varation In Player Salaries") + geom_line(aes(color = Leagues))
+plot(p)
+          
 ```
 
 ```{r include = FALSE}
@@ -171,7 +175,6 @@ pacf(df[,2])
 library(tseries)
 arch.model.1 <- garch(df[,2],c(0,1))
 summary(arch.model.1)
-arch.model.1
 ```
 
 ```{r}
@@ -179,24 +182,45 @@ arch.model.1
 library(ARDL)
 models <- auto_ardl(adjusted_salary ~ batting_Average + homerun_Average + rank_delta + W + L , data = df, max_order = 2)
 
-model <- summary(models$best_model)
-coef <- model$coefficients
-model$coefficients[10]
+year <- df[,1] %>% unique()
+
+N <- max(year) - min(year)
+
+m <- floor(0.75 * N^(1/3))
+
+
+NW_VCOV <- sandwich::NeweyWest(models$best_model, lag = m - 1, prewhite = F, 
+              adjust = T)
+
+
+library(sandwich)
+library(lmtest)
+library(broom)
+
+coef <- coeftest(models$best_model, vcov = NW_VCOV)
+coef <- broom::tidy(coef)
+coef <- dplyr::filter(coef, coef$p.value < .10)
 ```
+
+
+
 
 ```{r}
 options(digits=2)
 coef$Pr...t.. <- format(round(coef$Pr...t.., 2), nsmall = 2)
-coef <- coef %>% data.frame()
 
 ```
 
 ```{r}
-install.packages("kableExtra")
 library(kableExtra)
-colnames(coef) <- c("Estimates", "Standard Error", "T-Score", "P-Values")
+colnames(coef) <- c("Parameters", "Estimates", "Newey-West Standard Error", "T-Score", "P-Values")
 coef <- coef %>%
   kbl(caption = "Coefficient Values of Distributed Lag Model") %>%
   kable_classic(full_width = F, html_font = "Cambria")
+  
+```
+
+```{r}
+coef
 ```
 
