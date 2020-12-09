@@ -1,0 +1,64 @@
+F- Test for Joint Significance 
+# heteroskedasticity-robust F-test
+linearHypothesis(model, c("size=0", "expenditure=0"), white.adjust = "hc1")
+
+#Not robusy to heteroskedacity 
+summary(model)$fstatistic
+
+#olsrr is the package 
+# Conducts Breusch Pagan Test
+model <- lm(mpg ~ disp + hp + wt + drat, data = mtcars)
+ols_test_breusch_pagan(model)
+
+------------------------------------------------------------------------------------------
+
+# compute robust standard errors
+rob_se <- diag(vcovHC(model, type = "HC1"))^0.5
+
+# compute robust 95% confidence intervals
+rbind("lower" = coef(model) - qnorm(0.975) * rob_se,
+      "upper" = coef(model) + qnorm(0.975) * rob_se)
+-------------------------------------------------------------------------------------------------     
+# draw the robust 95% confidence set for coefficients on size and expenditure 
+confidenceEllipse(model, 
+                  fill = T,
+                  lwd = 0,
+                  which.coef = c("size", "expenditure"),
+                  main = "95% Confidence Sets",
+                  vcov. = vcovHC(model, type = "HC1"),
+                  col = "red")
+------------------------------------------------------------------------------------------------------                  
+ # fit the quadratic Model
+quadratic_model <- lm(score ~ income + I(income^2), data = CASchools)
+----------------------------------------------------------------------------------
+# obtain the model summary
+coeftest(quadratic_model, vcov. = vcovHC, type = "HC1")
+
+# estimate a cubic model
+cubic_model <- lm(score ~ poly(income, degree = 3, raw = TRUE), data = CASchools)
+-----------------------------------------------------------------------------------
+
+
+
+
+
+
+------------------------------------------------------------------------------------------------------
+quadriatic_model <- lm(score ~ income + I(income^2), data = CASchools)
+
+# set up data for prediction
+new_data <- data.frame(income = c(10, 11))
+
+# do the prediction
+Y_hat <- predict(quadriatic_model, newdata = new_data)
+
+# compute the difference
+diff(Y_hat)
+
+-------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
