@@ -2,7 +2,7 @@ F- Test for Joint Significance
 # heteroskedasticity-robust F-test
 linearHypothesis(model, c("size=0", "expenditure=0"), white.adjust = "hc1")
 
-#Not robusy to heteroskedacity 
+#Not robust to heteroskedacity 
 summary(model)$fstatistic
 
 #olsrr is the package 
@@ -57,7 +57,14 @@ diff(Y_hat)
 
 -------------------------------------------------------------------------------------------------------------
 
+new_data <- data.frame(income = c(10, 11, 40, 41))
 
+# predict the outcomes 
+Y_hat <- predict(LinearLog_model, newdata = new_data)
+
+# compute the expected difference
+Y_hat_matrix <- matrix(Y_hat, nrow = 2, byrow = TRUE)
+Y_hat_matrix[, 2] - Y_hat_matrix[, 1]
 
 
 
