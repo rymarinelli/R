@@ -77,6 +77,13 @@ coeftest(bi_model, vcov. = vcovHC, type = "HC1")
 -----------------------------------------------------------------------------------------------------------------------
 
 
+# estimate the fixed effects regression with plm()
+fatal_fe_mod <- plm(fatal_rate ~ beertax, 
+                    data = Fatalities,
+                    index = c("state", "year"), 
+                    model = "within")
 
+# print summary using robust standard errors
+coeftest(fatal_fe_mod, vcov. = vcovHC, type = "HC1")
 
 
