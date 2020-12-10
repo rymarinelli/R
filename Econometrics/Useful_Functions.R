@@ -95,3 +95,11 @@ fatal_tefe_mod <- plm(fatal_rate ~ beertax,
                       effect = "twoways")
 
 coeftest(fatal_tefe_mod, vcov = vcovHC, type = "HC1")
+
+--------------------------------------------------------------------------------------------------------------------------------
+
+class(fatal_tefe_lm_mod)
+coeftest(fatal_tefe_lm_mod, vcov = vcovHC, type = "HC1")[1, ]
+class(fatal_tefe_mod)
+coeftest(fatal_tefe_mod, vcov = vcovHC, type = "HC1")
+
