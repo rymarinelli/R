@@ -86,4 +86,12 @@ fatal_fe_mod <- plm(fatal_rate ~ beertax,
 # print summary using robust standard errors
 coeftest(fatal_fe_mod, vcov. = vcovHC, type = "HC1")
 
+------------------------------------------------------------------------------------------------------------------------------
 
+fatal_tefe_mod <- plm(fatal_rate ~ beertax, 
+                      data = Fatalities,
+                      index = c("state", "year"), 
+                      model = "within", 
+                      effect = "twoways")
+
+coeftest(fatal_tefe_mod, vcov = vcovHC, type = "HC1")
