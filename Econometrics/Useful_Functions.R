@@ -102,4 +102,21 @@ class(fatal_tefe_lm_mod)
 coeftest(fatal_tefe_lm_mod, vcov = vcovHC, type = "HC1")[1, ]
 class(fatal_tefe_mod)
 coeftest(fatal_tefe_mod, vcov = vcovHC, type = "HC1")
+--------------------------------------------------------------------------------------------------------------------------------------
 
+Fatalities$drinkagec <- cut(Fatalities$drinkage,
+                            breaks = 18:22, 
+                            include.lowest = TRUE, 
+                            right = FALSE)
+
+# set minimum drinking age [21, 22] to be the baseline level
+Fatalities$drinkagec <- relevel(Fatalities$drinkagec, "[21,22]")
+
+# mandadory jail or community service?
+Fatalities$punish <- with(Fatalities, factor(jail == "yes" | service == "yes", 
+                                             labels = c("no", "yes")))
+
+# the set of observations on all variables for 1982 and 1988
+Fatalities_1982_1988 <- Fatalities[with(Fatalities, year == 1982 | year == 1988), ]
+
+--------------------------------------------------------------------------------------------------------------------------------------------
