@@ -136,3 +136,7 @@ cig_iv_OR <- lm(residuals(cig_ivreg_diff3) ~ incomediff + salestaxdiff + cigtaxd
 cig_OR_test <- linearHypothesis(cig_iv_OR, 
                                c("salestaxdiff = 0", "cigtaxdiff = 0"), 
                                test = "Chisq")
+
+# compute correct p-value for J-statistic
+pchisq(cig_OR_test[2, 5], df = 1, lower.tail = FALSE)
+#> [1] 0.02636406
