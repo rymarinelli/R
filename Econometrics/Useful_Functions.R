@@ -128,3 +128,11 @@ denyprobit_null <- glm(formula = deny ~ 1,
 # compute the pseudo-R2 using 'logLik'
 1 - logLik(denyprobit2)[1]/logLik(denyprobit_null)[1]
 #> [1] 0.08594259
+
+------------------------------------------------------------------------------------------------------------------------------------------
+Calculate J Statistics Use F Test First to determine relavancy intitally 
+cig_iv_OR <- lm(residuals(cig_ivreg_diff3) ~ incomediff + salestaxdiff + cigtaxdiff)
+
+cig_OR_test <- linearHypothesis(cig_iv_OR, 
+                               c("salestaxdiff = 0", "cigtaxdiff = 0"), 
+                               test = "Chisq")
