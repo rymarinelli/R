@@ -156,3 +156,7 @@ coeftest(cig_ivreg2, vcov = vcovHC, type = "HC1")
 #> log(rincome)  0.21452    0.31175  0.6881  0.494917    
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+----------------------------------------------------------------------------------------------------------------------------------
+# compute the DID estimator using a linear model
+lm(I(y_post - y_pre) ~ TDummy)
