@@ -120,3 +120,11 @@ Fatalities$punish <- with(Fatalities, factor(jail == "yes" | service == "yes",
 Fatalities_1982_1988 <- Fatalities[with(Fatalities, year == 1982 | year == 1988), ]
 
 --------------------------------------------------------------------------------------------------------------------------------------------
+# compute the null model
+denyprobit_null <- glm(formula = deny ~ 1, 
+                       family = binomial(link = "probit"), 
+                       data = HMDA)
+
+# compute the pseudo-R2 using 'logLik'
+1 - logLik(denyprobit2)[1]/logLik(denyprobit_null)[1]
+#> [1] 0.08594259
