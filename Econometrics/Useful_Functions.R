@@ -160,3 +160,11 @@ coeftest(cig_ivreg2, vcov = vcovHC, type = "HC1")
 ----------------------------------------------------------------------------------------------------------------------------------
 # compute the DID estimator using a linear model
 lm(I(y_post - y_pre) ~ TDummy)
+
+--------------------------------------------------------------------------------------------------------------------------------
+data <- rdd_data(d$Y, 
+                 d$W, 
+                 cutpoint = 0)
+
+srdd_mod <- rdd_reg_lm(rdd_object = data, 
+                       slope = "same")
