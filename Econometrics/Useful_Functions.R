@@ -140,3 +140,19 @@ cig_OR_test <- linearHypothesis(cig_iv_OR,
 # compute correct p-value for J-statistic
 pchisq(cig_OR_test[2, 5], df = 1, lower.tail = FALSE)
 #> [1] 0.02636406
+
+--------------------------------------------------------------------------------------------------------------------------------------
+# estimate the model
+cig_ivreg2 <- ivreg(log(packs) ~ log(rprice) + log(rincome) | log(rincome) + 
+                    salestax, data = c1995)
+
+coeftest(cig_ivreg2, vcov = vcovHC, type = "HC1")
+#> 
+#> t test of coefficients:
+#> 
+#>              Estimate Std. Error t value  Pr(>|t|)    
+#> (Intercept)   9.43066    1.25939  7.4883 1.935e-09 ***
+#> log(rprice)  -1.14338    0.37230 -3.0711  0.003611 ** 
+#> log(rincome)  0.21452    0.31175  0.6881  0.494917    
+#> ---
+#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
